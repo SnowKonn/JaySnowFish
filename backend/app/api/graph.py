@@ -622,22 +622,22 @@ def delete_graph(graph_id: str):
         }), 500
 
 
-# ============== 金融市场数据接口 ==============
+# ============== 금융시장 데이터 API ==============
 
 @graph_bp.route('/market-data/fetch', methods=['POST'])
 def fetch_market_data():
     """
-    抓取真实金融市场数据，生成可用作模拟种子的文档文本。
+    실제 금융시장 데이터를 가져와 시뮬레이션 시드로 사용할 문서 텍스트를 생성한다.
 
-    请求体（JSON）：
+    요청 본문(JSON):
     {
-        "stocks": ["AAPL", "^GSPC"],            // 标的代码（格式取决于 stock_source）
-        "stock_source": "yahoo",                 // stooq / yahoo / alpha_vantage
-        "fred_series": ["FEDFUNDS", "UNRATE"],   // FRED 宏观序列代码（需 FRED_API_KEY）
-        "oecd_queries": ["..."],                  // OECD SDMX 查询路径
-        "ecos_series": ["722Y001",                // 韩国银行 ECOS，字符串或对象
+        "stocks": ["AAPL", "^GSPC"],             // 종목 코드 (형식은 stock_source에 따름)
+        "stock_source": "yahoo",                  // stooq / yahoo / alpha_vantage
+        "fred_series": ["FEDFUNDS", "UNRATE"],    // FRED 거시 시리즈 코드 (FRED_API_KEY 필요)
+        "oecd_queries": ["..."],                   // OECD SDMX 조회 경로
+        "ecos_series": ["722Y001",                 // 한국은행 ECOS, 문자열 또는 객체
                         {"stat_code": "901Y009", "item_code": "0", "cycle": "M"}],
-        "lookback": 60                            // 可选，取最近 N 个交易日/观测点
+        "lookback": 60                             // 선택, 최근 N 거래일/관측치
     }
     """
     try:
@@ -654,7 +654,7 @@ def fetch_market_data():
         if not any([stocks, fred_series, oecd_queries, ecos_series]):
             return jsonify({
                 "success": False,
-                "error": "请至少提供 stocks / fred_series / oecd_queries / ecos_series 之一"
+                "error": "stocks / fred_series / oecd_queries / ecos_series 중 하나 이상을 제공하세요"
             }), 400
 
         seed_text = build_market_seed(
@@ -673,7 +673,7 @@ def fetch_market_data():
         })
 
     except Exception as e:
-        logger.error(f"市场数据抓取失败: {e}")
+        logger.error(f"시장 데이터 조회 실패: {e}")
         return jsonify({
             "success": False,
             "error": str(e),

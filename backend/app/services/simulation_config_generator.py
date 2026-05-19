@@ -25,28 +25,28 @@ from .zep_entity_reader import EntityNode, ZepEntityReader
 
 logger = get_logger('mirofish.simulation_config')
 
-# 金融市场交易时段配置（参考美东时间，可按目标市场调整）
+# 금융시장 거래 시간대 설정 (미국 동부시간 기준, 대상 시장에 맞춰 조정 가능)
 MARKET_HOURS_CONFIG = {
-    # 盘前时段（流动性低，关注隔夜消息）
+    # 장 시작 전 (유동성 낮음, 밤사이 뉴스에 주목)
     "pre_market_hours": [4, 5, 6, 7, 8],
-    # 开盘时段（最活跃，价格发现集中）
+    # 개장 시간대 (가장 활발, 가격 발견 집중)
     "market_open_hours": [9, 10, 11],
-    # 盘中时段（中等活跃）
+    # 장중 시간대 (보통 수준의 활발도)
     "mid_session_hours": [12, 13, 14],
-    # 收盘时段（高峰，仓位调整与尾盘博弈）
+    # 마감 시간대 (피크, 포지션 조정과 종가 부근 공방)
     "market_close_hours": [15, 16],
-    # 盘后时段（财报发布、隔夜消化）
+    # 장 마감 후 (실적 발표, 밤사이 소화)
     "after_hours": [17, 18, 19, 20],
-    # 休市时段（几乎无交易活动）
+    # 휴장 시간대 (거래 활동 거의 없음)
     "closed_hours": [21, 22, 23, 0, 1, 2, 3],
-    # 活跃度系数
+    # 활발도 계수
     "activity_multipliers": {
-        "pre_market": 0.4,    # 盘前消息消化
-        "open": 1.5,          # 开盘高峰
-        "mid": 0.7,           # 盘中中等
-        "close": 1.4,         # 收盘高峰
-        "after": 0.5,         # 盘后财报
-        "closed": 0.05        # 休市几乎无人
+        "pre_market": 0.4,    # 장전 뉴스 소화
+        "open": 1.5,          # 개장 피크
+        "mid": 0.7,           # 장중 보통
+        "close": 1.4,         # 마감 피크
+        "after": 0.5,         # 장후 실적
+        "closed": 0.05        # 휴장, 거의 없음
     }
 }
 

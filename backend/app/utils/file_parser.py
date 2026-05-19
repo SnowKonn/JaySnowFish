@@ -125,11 +125,11 @@ class FileParser:
     @staticmethod
     def _extract_from_csv(file_path: str) -> str:
         """
-        从CSV提取文本，针对金融行情数据（OHLCV）做可读化处理。
+        CSV에서 텍스트를 추출하며, 금융 시세 데이터(OHLCV)는 가독성 있게 처리한다.
 
-        将表格数据转换为自然语言摘要，便于LLM理解市场走势。
-        识别常见列名（Date/Open/High/Low/Close/Volume），生成涨跌幅、
-        区间高低点等衍生描述；非行情类CSV则按通用表格逐行转写。
+        표 데이터를 자연어 요약문으로 변환해 LLM이 시장 흐름을 이해하기 쉽게 한다.
+        흔한 열 이름(Date/Open/High/Low/Close/Volume)을 인식해 등락률,
+        기간 고저점 등 파생 설명을 생성한다. 시세가 아닌 CSV는 일반 표로 행마다 옮겨 적는다.
         """
         import csv
         import io
@@ -150,16 +150,16 @@ class FileParser:
                     return lower.index(n)
             return None
 
-        idx_date = col('date', 'datetime', 'time', '日期')
-        idx_close = col('close', 'adj close', 'adj_close', '收盘', '收盘价')
+        idx_date = col('date', 'datetime', 'time', '日期', '날짜', '일자')
+        idx_close = col('close', 'adj close', 'adj_close', '收盘', '收盘价', '종가')
 
-        lines = [f"CSV市场数据，共 {len(data_rows)} 行，列：{', '.join(header)}"]
+        lines = [f"CSV 시장 데이터, 총 {len(data_rows)}행, 열: {', '.join(header)}"]
 
         if idx_close is not None:
-            idx_open = col('open', '开盘', '开盘价')
-            idx_high = col('high', '最高', '最高价')
-            idx_low = col('low', '最低', '最低价')
-            idx_vol = col('volume', 'vol', '成交量')
+            idx_open = col('open', '开盘', '开盘价', '시가')
+            idx_high = col('high', '最高', '最高价', '고가')
+            idx_low = col('low', '最低', '最低价', '저가')
+            idx_vol = col('volume', 'vol', '成交量', '거래량')
 
             def fnum(row, i):
                 if i is None or i >= len(row):
@@ -180,31 +180,31 @@ class FileParser:
                 period_low = min([l for l in lows if l is not None] or [c for _, c in closes])
                 change_pct = ((last_c - first_c) / first_c * 100) if first_c else 0.0
 
-                start_date = data_rows[0][idx_date].strip() if idx_date is not None and idx_date < len(data_rows[0]) else "起始"
-                end_date = data_rows[-1][idx_date].strip() if idx_date is not None and idx_date < len(data_rows[-1]) else "结束"
+                start_date = data_rows[0][idx_date].strip() if idx_date is not None and idx_date < len(data_rows[0]) else "시작"
+                end_date = data_rows[-1][idx_date].strip() if idx_date is not None and idx_date < len(data_rows[-1]) else "종료"
 
                 lines.append(
-                    f"行情概览：{start_date} 至 {end_date}，"
-                    f"区间收盘自 {first_c:g} 变化至 {last_c:g}（涨跌幅 {change_pct:+.2f}%），"
-                    f"区间最高 {period_high:g}，最低 {period_low:g}。"
+                    f"시세 개요: {start_date} ~ {end_date}, "
+                    f"기간 종가가 {first_c:g}에서 {last_c:g}로 변동 (등락률 {change_pct:+.2f}%), "
+                    f"기간 최고 {period_high:g}, 최저 {period_low:g}."
                 )
-                lines.append("逐日行情：")
+                lines.append("일별 시세:")
                 for row in data_rows:
                     parts = []
-                    for label, i in (('日期', idx_date), ('开', idx_open), ('高', idx_high),
-                                     ('低', idx_low), ('收', idx_close), ('量', idx_vol)):
+                    for label, i in (('날짜', idx_date), ('시가', idx_open), ('고가', idx_high),
+                                     ('저가', idx_low), ('종가', idx_close), ('거래량', idx_vol)):
                         if i is not None and i < len(row) and str(row[i]).strip():
                             parts.append(f"{label} {str(row[i]).strip()}")
                     if parts:
-                        lines.append("  " + "，".join(parts))
+                        lines.append("  " + ", ".join(parts))
                 return "\n".join(lines)
 
-        # 通用表格：逐行键值对转写
+        # 일반 표: 행마다 키-값 쌍으로 옮겨 적음
         for row in data_rows:
             pairs = [f"{header[i]}: {row[i].strip()}"
                      for i in range(min(len(header), len(row))) if row[i].strip()]
             if pairs:
-                lines.append("  " + "；".join(pairs))
+                lines.append("  " + "; ".join(pairs))
         return "\n".join(lines)
     
     @classmethod

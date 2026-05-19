@@ -40,22 +40,22 @@ class Config:
     UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), '../uploads')
     ALLOWED_EXTENSIONS = {'pdf', 'md', 'txt', 'markdown', 'csv'}
 
-    # ===== 金融市场数据源配置 =====
-    # Stooq：免费、无需密钥，提供股票/指数/外汇/商品的历史与日线数据
+    # ===== 금융시장 데이터 소스 설정 =====
+    # Stooq: 무료·키 불필요. 주식/지수/외환/원자재의 과거 및 일봉 데이터 제공
     STOOQ_BASE_URL = os.environ.get('STOOQ_BASE_URL', 'https://stooq.com/q/d/l/')
-    # Yahoo Finance：免费、无需密钥，通过公开 chart 接口抓取行情
+    # Yahoo Finance: 무료·키 불필요. 공개 chart 엔드포인트로 시세 조회
     YAHOO_CHART_BASE_URL = os.environ.get(
         'YAHOO_CHART_BASE_URL', 'https://query1.finance.yahoo.com/v8/finance/chart/')
-    # Alpha Vantage：股票/外汇/加密货币行情（需免费 API Key）
+    # Alpha Vantage: 주식/외환/암호화폐 시세 (무료 API 키 필요)
     ALPHA_VANTAGE_API_KEY = os.environ.get('ALPHA_VANTAGE_API_KEY')
-    # FRED：美联储宏观经济数据（利率、CPI、失业率等，需免费 API Key）
+    # FRED: 미국 연준 거시경제 데이터 (금리, CPI, 실업률 등. 무료 API 키 필요)
     FRED_API_KEY = os.environ.get('FRED_API_KEY')
-    # OECD：经合组织宏观经济数据，免费、无需密钥（SDMX-JSON 接口）
+    # OECD: OECD 거시경제 데이터. 무료·키 불필요 (SDMX-JSON 인터페이스)
     OECD_SDMX_BASE_URL = os.environ.get(
         'OECD_SDMX_BASE_URL', 'https://sdmx.oecd.org/public/rest/data/')
-    # 韩国银行 ECOS：韩国宏观经济统计（需免费 API Key）
+    # 한국은행 ECOS: 한국 거시경제 통계 (무료 API 키 필요)
     ECOS_API_KEY = os.environ.get('ECOS_API_KEY')
-    # 默认市场数据抓取条数（生成种子文本时取最近 N 个交易日）
+    # 시드 텍스트 생성 시 기본으로 가져올 최근 거래일 수
     MARKET_DATA_DEFAULT_LOOKBACK = int(os.environ.get('MARKET_DATA_DEFAULT_LOOKBACK', '60'))
     
     # 文本处理配置
