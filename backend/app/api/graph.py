@@ -608,13 +608,65 @@ def delete_graph(graph_id: str):
         
         builder = GraphBuilderService(api_key=Config.ZEP_API_KEY)
         builder.delete_graph(graph_id)
-        
+
         return jsonify({
             "success": True,
             "message": t('api.graphDeleted', id=graph_id)
         })
-        
+
     except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }), 500
+
+
+# ============== 金融市场数据接口 ==============
+
+@graph_bp.route('/market-data/fetch', methods=['POST'])
+def fetch_market_data():
+    """
+    抓取真实金融市场数据，生成可用作模拟种子的文档文本。
+
+    请求体（JSON）：
+    {
+        "stocks": ["aapl.us", "^spx"],          // Stooq 标的代码
+        "fred_series": ["FEDFUNDS", "UNRATE"],  // FRED 宏观序列代码
+        "lookback": 60,                          // 可选，取最近 N 个交易日
+        "use_alpha_vantage": false               // 可选，股票改用 Alpha Vantage
+    }
+    """
+    try:
+        from ..services.market_data import build_market_seed
+
+        data = request.get_json(silent=True) or {}
+        stocks = data.get('stocks') or []
+        fred_series = data.get('fred_series') or []
+        lookback = data.get('lookback')
+        use_alpha_vantage = bool(data.get('use_alpha_vantage', False))
+
+        if not stocks and not fred_series:
+            return jsonify({
+                "success": False,
+                "error": "请至少提供 stocks 或 fred_series 之一"
+            }), 400
+
+        seed_text = build_market_seed(
+            stocks=stocks,
+            fred_series=fred_series,
+            lookback=lookback,
+            use_alpha_vantage=use_alpha_vantage,
+        )
+
+        return jsonify({
+            "success": True,
+            "seed_text": seed_text,
+            "char_count": len(seed_text)
+        })
+
+    except Exception as e:
+        logger.error(f"市场数据抓取失败: {e}")
         return jsonify({
             "success": False,
             "error": str(e),

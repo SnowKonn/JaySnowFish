@@ -38,7 +38,17 @@ class Config:
     # 文件上传配置
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB
     UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), '../uploads')
-    ALLOWED_EXTENSIONS = {'pdf', 'md', 'txt', 'markdown'}
+    ALLOWED_EXTENSIONS = {'pdf', 'md', 'txt', 'markdown', 'csv'}
+
+    # ===== 金融市场数据源配置 =====
+    # Stooq：免费、无需密钥，提供股票/指数/外汇/商品的历史与日线数据
+    STOOQ_BASE_URL = os.environ.get('STOOQ_BASE_URL', 'https://stooq.com/q/d/l/')
+    # Alpha Vantage：股票/外汇/加密货币行情（需免费 API Key）
+    ALPHA_VANTAGE_API_KEY = os.environ.get('ALPHA_VANTAGE_API_KEY')
+    # FRED：美联储宏观经济数据（利率、CPI、失业率等，需免费 API Key）
+    FRED_API_KEY = os.environ.get('FRED_API_KEY')
+    # 默认市场数据抓取条数（生成种子文本时取最近 N 个交易日）
+    MARKET_DATA_DEFAULT_LOOKBACK = int(os.environ.get('MARKET_DATA_DEFAULT_LOOKBACK', '60'))
     
     # 文本处理配置
     DEFAULT_CHUNK_SIZE = 500  # 默认切块大小

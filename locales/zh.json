@@ -27,7 +27,7 @@
   },
   "meta": {
     "title": "MiroFish - 预测万物",
-    "description": "MiroFish - 社交媒体舆论模拟系统"
+    "description": "MiroFish - 金融市场预测模拟系统"
   },
   "nav": {
     "visitGithub": "访问我们的Github主页"
@@ -66,7 +66,7 @@
     "orBrowse": "或点击浏览文件系统",
     "inputParams": "输入参数",
     "simulationPrompt": ">_ 02 / 模拟提示词",
-    "promptPlaceholder": "// 用自然语言输入模拟或预测需求（例.武大若发布撤销肖某处分的公告，会引发什么舆情走向）",
+    "promptPlaceholder": "// 用自然语言输入市场预测需求（例.若美联储下次议息会议加息25个基点，科技股与美债收益率会如何反应）",
     "engineBadge": "引擎: MiroFish-V1.0",
     "startEngine": "启动引擎",
     "initializing": "初始化中..."

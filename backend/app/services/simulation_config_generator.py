@@ -25,25 +25,28 @@ from .zep_entity_reader import EntityNode, ZepEntityReader
 
 logger = get_logger('mirofish.simulation_config')
 
-# 中国作息时间配置（北京时间）
-CHINA_TIMEZONE_CONFIG = {
-    # 深夜时段（几乎无人活动）
-    "dead_hours": [0, 1, 2, 3, 4, 5],
-    # 早间时段（逐渐醒来）
-    "morning_hours": [6, 7, 8],
-    # 工作时段
-    "work_hours": [9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
-    # 晚间高峰（最活跃）
-    "peak_hours": [19, 20, 21, 22],
-    # 夜间时段（活跃度下降）
-    "night_hours": [23],
+# 金融市场交易时段配置（参考美东时间，可按目标市场调整）
+MARKET_HOURS_CONFIG = {
+    # 盘前时段（流动性低，关注隔夜消息）
+    "pre_market_hours": [4, 5, 6, 7, 8],
+    # 开盘时段（最活跃，价格发现集中）
+    "market_open_hours": [9, 10, 11],
+    # 盘中时段（中等活跃）
+    "mid_session_hours": [12, 13, 14],
+    # 收盘时段（高峰，仓位调整与尾盘博弈）
+    "market_close_hours": [15, 16],
+    # 盘后时段（财报发布、隔夜消化）
+    "after_hours": [17, 18, 19, 20],
+    # 休市时段（几乎无交易活动）
+    "closed_hours": [21, 22, 23, 0, 1, 2, 3],
     # 活跃度系数
     "activity_multipliers": {
-        "dead": 0.05,      # 凌晨几乎无人
-        "morning": 0.4,    # 早间逐渐活跃
-        "work": 0.7,       # 工作时段中等
-        "peak": 1.5,       # 晚间高峰
-        "night": 0.5       # 深夜下降
+        "pre_market": 0.4,    # 盘前消息消化
+        "open": 1.5,          # 开盘高峰
+        "mid": 0.7,           # 盘中中等
+        "close": 1.4,         # 收盘高峰
+        "after": 0.5,         # 盘后财报
+        "closed": 0.05        # 休市几乎无人
     }
 }
 
@@ -122,7 +125,7 @@ class EventConfig:
     # 热点话题关键词
     hot_topics: List[str] = field(default_factory=list)
     
-    # 舆论引导方向
+    # 市场走势与情绪发展方向
     narrative_direction: str = ""
 
 
@@ -547,17 +550,17 @@ class SimulationConfigGenerator:
 ## 任务
 请生成时间配置JSON。
 
-### 基本原则（仅供参考，需根据具体事件和参与群体灵活调整）：
-- 请根据模拟场景推断目标用户群体所在时区和作息习惯，以下为东八区(UTC+8)的参考示例
-- 凌晨0-5点几乎无人活动（活跃度系数0.05）
-- 早上6-8点逐渐活跃（活跃度系数0.4）
-- 工作时间9-18点中等活跃（活跃度系数0.7）
-- 晚间19-22点是高峰期（活跃度系数1.5）
-- 23点后活跃度下降（活跃度系数0.5）
-- 一般规律：凌晨低活跃、早间渐增、工作时段中等、晚间高峰
-- **重要**：以下示例值仅供参考，你需要根据事件性质、参与群体特点来调整具体时段
-  - 例如：学生群体高峰可能是21-23点；媒体全天活跃；官方机构只在工作时间
-  - 例如：突发热点可能导致深夜也有讨论，off_peak_hours 可适当缩短
+### 基本原则（仅供参考，需根据具体市场和参与者灵活调整）：
+- 请根据模拟场景推断目标市场的交易时段，以下为美股市场(美东时间)的参考示例
+- 休市时段（21点-次日3点）几乎无交易活动（活跃度系数0.05）
+- 盘前4-8点消化隔夜消息，流动性低（活跃度系数0.4）
+- 开盘9-11点是高峰期，价格发现集中（活跃度系数1.5）
+- 盘中12-14点中等活跃（活跃度系数0.7）
+- 收盘15-16点高峰期，尾盘仓位调整（活跃度系数1.4）
+- 盘后17-20点关注财报与隔夜消息（活跃度系数0.5）
+- **重要**：以下示例值仅供参考，你需要根据标的市场、参与者类型来调整具体时段
+  - 例如：A股交易时段为9:30-15:00；外汇/加密货币市场近乎24小时连续交易
+  - 例如：重大宏观事件（央行决议、CPI数据）可导致盘前盘后活跃度大幅上升
 
 ### 返回JSON格式（不要markdown）
 
@@ -567,25 +570,25 @@ class SimulationConfigGenerator:
     "minutes_per_round": 60,
     "agents_per_hour_min": 5,
     "agents_per_hour_max": 50,
-    "peak_hours": [19, 20, 21, 22],
-    "off_peak_hours": [0, 1, 2, 3, 4, 5],
-    "morning_hours": [6, 7, 8],
-    "work_hours": [9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
-    "reasoning": "针对该事件的时间配置说明"
+    "peak_hours": [9, 10, 15, 16],
+    "off_peak_hours": [21, 22, 23, 0, 1, 2, 3],
+    "morning_hours": [4, 5, 6, 7, 8],
+    "work_hours": [11, 12, 13, 14, 17, 18, 19, 20],
+    "reasoning": "针对该市场情景的交易时段配置说明"
 }}
 
 字段说明：
-- total_simulation_hours (int): 模拟总时长，24-168小时，突发事件短、持续话题长
+- total_simulation_hours (int): 模拟总时长，24-168小时，突发行情短、趋势性行情长
 - minutes_per_round (int): 每轮时长，30-120分钟，建议60分钟
 - agents_per_hour_min (int): 每小时最少激活Agent数（取值范围: 1-{max_agents_allowed}）
 - agents_per_hour_max (int): 每小时最多激活Agent数（取值范围: 1-{max_agents_allowed}）
-- peak_hours (int数组): 高峰时段，根据事件参与群体调整
-- off_peak_hours (int数组): 低谷时段，通常深夜凌晨
-- morning_hours (int数组): 早间时段
-- work_hours (int数组): 工作时段
+- peak_hours (int数组): 交易高峰时段（开盘/收盘），根据目标市场调整
+- off_peak_hours (int数组): 休市时段，几乎无交易活动
+- morning_hours (int数组): 盘前时段，消化隔夜消息
+- work_hours (int数组): 盘中及盘后时段
 - reasoning (string): 简要说明为什么这样配置"""
 
-        system_prompt = "你是社交媒体模拟专家。返回纯JSON格式，时间配置需符合模拟场景中目标用户群体的作息习惯。"
+        system_prompt = "你是金融市场预测模拟专家。返回纯JSON格式，时间配置需符合目标市场的交易时段特征。"
         system_prompt = f"{system_prompt}\n\n{get_language_instruction()}"
 
         try:
@@ -595,17 +598,17 @@ class SimulationConfigGenerator:
             return self._get_default_time_config(num_entities)
     
     def _get_default_time_config(self, num_entities: int) -> Dict[str, Any]:
-        """获取默认时间配置（中国人作息）"""
+        """获取默认时间配置（美股交易时段）"""
         return {
             "total_simulation_hours": 72,
             "minutes_per_round": 60,  # 每轮1小时，加快时间流速
             "agents_per_hour_min": max(1, num_entities // 15),
             "agents_per_hour_max": max(5, num_entities // 5),
-            "peak_hours": [19, 20, 21, 22],
-            "off_peak_hours": [0, 1, 2, 3, 4, 5],
-            "morning_hours": [6, 7, 8],
-            "work_hours": [9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
-            "reasoning": "使用默认中国人作息配置（每轮1小时）"
+            "peak_hours": [9, 10, 15, 16],
+            "off_peak_hours": [21, 22, 23, 0, 1, 2, 3],
+            "morning_hours": [4, 5, 6, 7, 8],
+            "work_hours": [11, 12, 13, 14, 17, 18, 19, 20],
+            "reasoning": "使用默认美股交易时段配置（每轮1小时）"
         }
     
     def _parse_time_config(self, result: Dict[str, Any], num_entities: int) -> TimeSimulationConfig:
@@ -633,12 +636,12 @@ class SimulationConfigGenerator:
             minutes_per_round=result.get("minutes_per_round", 60),  # 默认每轮1小时
             agents_per_hour_min=agents_per_hour_min,
             agents_per_hour_max=agents_per_hour_max,
-            peak_hours=result.get("peak_hours", [19, 20, 21, 22]),
-            off_peak_hours=result.get("off_peak_hours", [0, 1, 2, 3, 4, 5]),
-            off_peak_activity_multiplier=0.05,  # 凌晨几乎无人
-            morning_hours=result.get("morning_hours", [6, 7, 8]),
+            peak_hours=result.get("peak_hours", [9, 10, 15, 16]),
+            off_peak_hours=result.get("off_peak_hours", [21, 22, 23, 0, 1, 2, 3]),
+            off_peak_activity_multiplier=0.05,  # 休市几乎无交易
+            morning_hours=result.get("morning_hours", [4, 5, 6, 7, 8]),
             morning_activity_multiplier=0.4,
-            work_hours=result.get("work_hours", list(range(9, 19))),
+            work_hours=result.get("work_hours", [11, 12, 13, 14, 17, 18, 19, 20]),
             work_activity_multiplier=0.7,
             peak_activity_multiplier=1.5
         )
@@ -684,25 +687,25 @@ class SimulationConfigGenerator:
 
 ## 任务
 请生成事件配置JSON：
-- 提取热点话题关键词
-- 描述舆论发展方向
-- 设计初始帖子内容，**每个帖子必须指定 poster_type（发布者类型）**
+- 提取市场关注的关键主题（如标的、宏观因子、催化剂）
+- 描述市场走势与情绪发展方向
+- 设计初始市场信号/消息，**每个消息必须指定 poster_type（发布者类型）**
 
-**重要**: poster_type 必须从上面的"可用实体类型"中选择，这样初始帖子才能分配给合适的 Agent 发布。
-例如：官方声明应由 Official/University 类型发布，新闻由 MediaOutlet 发布，学生观点由 Student 发布。
+**重要**: poster_type 必须从上面的"可用实体类型"中选择，这样初始消息才能分配给合适的 Agent 发布。
+例如：央行政策声明应由 CentralBank/CentralBanker 发布，研报由 SellSideAnalyst/InvestmentBank 发布，财报由 ListedCompany 发布，散户观点由 RetailInvestor 发布。
 
 返回JSON格式（不要markdown）：
 {{
-    "hot_topics": ["关键词1", "关键词2", ...],
-    "narrative_direction": "<舆论发展方向描述>",
+    "hot_topics": ["关键主题1", "关键主题2", ...],
+    "narrative_direction": "<市场走势与情绪发展方向描述>",
     "initial_posts": [
-        {{"content": "帖子内容", "poster_type": "实体类型（必须从可用类型中选择）"}},
+        {{"content": "市场信号/消息内容", "poster_type": "实体类型（必须从可用类型中选择）"}},
         ...
     ],
     "reasoning": "<简要说明>"
 }}"""
 
-        system_prompt = "你是舆论分析专家。返回纯JSON格式。注意 poster_type 必须精确匹配可用实体类型。"
+        system_prompt = "你是金融市场分析专家。返回纯JSON格式。注意 poster_type 必须精确匹配可用实体类型。"
         system_prompt = f"{system_prompt}\n\n{get_language_instruction()}\nIMPORTANT: The 'poster_type' field value MUST be in English PascalCase exactly matching the available entity types. Only 'content', 'narrative_direction', 'hot_topics' and 'reasoning' fields should use the specified language."
 
         try:
@@ -830,7 +833,7 @@ class SimulationConfigGenerator:
                 "summary": e.summary[:summary_len] if e.summary else ""
             })
         
-        prompt = f"""基于以下信息，为每个实体生成社交媒体活动配置。
+        prompt = f"""基于以下信息，为每个实体生成市场参与活动配置。
 
 模拟需求: {simulation_requirement}
 
@@ -841,11 +844,11 @@ class SimulationConfigGenerator:
 
 ## 任务
 为每个实体生成活动配置，注意：
-- **时间符合目标用户群体作息**：以下为参考（东八区），请根据模拟场景调整
-- **官方机构**（University/GovernmentAgency）：活跃度低(0.1-0.3)，工作时间(9-17)活动，响应慢(60-240分钟)，影响力高(2.5-3.0)
-- **媒体**（MediaOutlet）：活跃度中(0.4-0.6)，全天活动(8-23)，响应快(5-30分钟)，影响力高(2.0-2.5)
-- **个人**（Student/Person/Alumni）：活跃度高(0.6-0.9)，主要晚间活动(18-23)，响应快(1-15分钟)，影响力低(0.8-1.2)
-- **公众人物/专家**：活跃度中(0.4-0.6)，影响力中高(1.5-2.0)
+- **时间符合目标市场交易时段**：以下为参考（美股美东时间），请根据模拟场景调整
+- **监管机构/央行**（RegulatoryAgency/CentralBank）：活跃度低(0.1-0.3)，工作时间(9-17)发声，响应慢(60-240分钟)，影响力极高(2.5-3.0)
+- **财经媒体**（FinancialMediaOutlet）：活跃度中(0.4-0.6)，全天活动(4-20)，响应快(5-30分钟)，影响力高(2.0-2.5)
+- **散户投资者**（RetailInvestor/Person）：活跃度高(0.6-0.9)，集中开盘收盘(9-11,15-16)，响应快(1-15分钟)，影响力低(0.8-1.2)
+- **机构交易员/基金经理/卖方分析师**：活跃度中(0.4-0.6)，影响力中高(1.5-2.0)
 
 返回JSON格式（不要markdown）：
 {{
@@ -853,9 +856,9 @@ class SimulationConfigGenerator:
         {{
             "agent_id": <必须与输入一致>,
             "activity_level": <0.0-1.0>,
-            "posts_per_hour": <发帖频率>,
-            "comments_per_hour": <评论频率>,
-            "active_hours": [<活跃小时列表，考虑中国人作息>],
+            "posts_per_hour": <发帖/喊单频率>,
+            "comments_per_hour": <评论/跟帖频率>,
+            "active_hours": [<活跃小时列表，考虑目标市场交易时段>],
             "response_delay_min": <最小响应延迟分钟>,
             "response_delay_max": <最大响应延迟分钟>,
             "sentiment_bias": <-1.0到1.0>,
@@ -866,7 +869,7 @@ class SimulationConfigGenerator:
     ]
 }}"""
 
-        system_prompt = "你是社交媒体行为分析专家。返回纯JSON，配置需符合模拟场景中目标用户群体的作息习惯。"
+        system_prompt = "你是金融市场参与者行为分析专家。返回纯JSON，配置需符合目标市场的交易时段特征。"
         system_prompt = f"{system_prompt}\n\n{get_language_instruction()}\nIMPORTANT: The 'stance' field value MUST be one of the English strings: 'supportive', 'opposing', 'neutral', 'observer'. All JSON field names and numeric values must remain unchanged. Only natural language text fields should use the specified language."
 
         try:

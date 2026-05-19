@@ -27,7 +27,7 @@
   },
   "meta": {
     "title": "MiroFish - Predict Everything",
-    "description": "MiroFish - Social Media Opinion Simulation System"
+    "description": "MiroFish - Financial Market Forecasting Simulation System"
   },
   "nav": {
     "visitGithub": "Visit our Github page"
@@ -66,7 +66,7 @@
     "orBrowse": "or click to browse files",
     "inputParams": "Input Parameters",
     "simulationPrompt": ">_ 02 / Simulation Prompt",
-    "promptPlaceholder": "// Describe your simulation or prediction requirement in natural language",
+    "promptPlaceholder": "// Describe your market forecasting question in natural language (e.g. if the Fed hikes 25bps at the next meeting, how will tech stocks and Treasury yields react)",
     "engineBadge": "Engine: MiroFish-V1.0",
     "startEngine": "Start Engine",
     "initializing": "Initializing..."

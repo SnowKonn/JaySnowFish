@@ -60,8 +60,8 @@ def _read_text_with_fallback(file_path: str) -> str:
 
 class FileParser:
     """文件解析器"""
-    
-    SUPPORTED_EXTENSIONS = {'.pdf', '.md', '.markdown', '.txt'}
+
+    SUPPORTED_EXTENSIONS = {'.pdf', '.md', '.markdown', '.txt', '.csv'}
     
     @classmethod
     def extract_text(cls, file_path: str) -> str:
@@ -90,7 +90,9 @@ class FileParser:
             return cls._extract_from_md(file_path)
         elif suffix == '.txt':
             return cls._extract_from_txt(file_path)
-        
+        elif suffix == '.csv':
+            return cls._extract_from_csv(file_path)
+
         raise ValueError(f"无法处理的文件格式: {suffix}")
     
     @staticmethod
@@ -119,6 +121,91 @@ class FileParser:
     def _extract_from_txt(file_path: str) -> str:
         """从TXT提取文本，支持自动编码检测"""
         return _read_text_with_fallback(file_path)
+
+    @staticmethod
+    def _extract_from_csv(file_path: str) -> str:
+        """
+        从CSV提取文本，针对金融行情数据（OHLCV）做可读化处理。
+
+        将表格数据转换为自然语言摘要，便于LLM理解市场走势。
+        识别常见列名（Date/Open/High/Low/Close/Volume），生成涨跌幅、
+        区间高低点等衍生描述；非行情类CSV则按通用表格逐行转写。
+        """
+        import csv
+        import io
+
+        raw = _read_text_with_fallback(file_path)
+        reader = csv.reader(io.StringIO(raw))
+        rows = [r for r in reader if any(cell.strip() for cell in r)]
+        if not rows:
+            return ""
+
+        header = [h.strip() for h in rows[0]]
+        data_rows = rows[1:]
+        lower = [h.lower() for h in header]
+
+        def col(*names):
+            for n in names:
+                if n in lower:
+                    return lower.index(n)
+            return None
+
+        idx_date = col('date', 'datetime', 'time', '日期')
+        idx_close = col('close', 'adj close', 'adj_close', '收盘', '收盘价')
+
+        lines = [f"CSV市场数据，共 {len(data_rows)} 行，列：{', '.join(header)}"]
+
+        if idx_close is not None:
+            idx_open = col('open', '开盘', '开盘价')
+            idx_high = col('high', '最高', '最高价')
+            idx_low = col('low', '最低', '最低价')
+            idx_vol = col('volume', 'vol', '成交量')
+
+            def fnum(row, i):
+                if i is None or i >= len(row):
+                    return None
+                try:
+                    return float(str(row[i]).replace(',', '').strip())
+                except (ValueError, AttributeError):
+                    return None
+
+            closes = [(r, fnum(r, idx_close)) for r in data_rows]
+            closes = [(r, c) for r, c in closes if c is not None]
+            if closes:
+                first_c = closes[0][1]
+                last_c = closes[-1][1]
+                highs = [fnum(r, idx_high) for r, _ in closes]
+                lows = [fnum(r, idx_low) for r, _ in closes]
+                period_high = max([h for h in highs if h is not None] or [c for _, c in closes])
+                period_low = min([l for l in lows if l is not None] or [c for _, c in closes])
+                change_pct = ((last_c - first_c) / first_c * 100) if first_c else 0.0
+
+                start_date = data_rows[0][idx_date].strip() if idx_date is not None and idx_date < len(data_rows[0]) else "起始"
+                end_date = data_rows[-1][idx_date].strip() if idx_date is not None and idx_date < len(data_rows[-1]) else "结束"
+
+                lines.append(
+                    f"行情概览：{start_date} 至 {end_date}，"
+                    f"区间收盘自 {first_c:g} 变化至 {last_c:g}（涨跌幅 {change_pct:+.2f}%），"
+                    f"区间最高 {period_high:g}，最低 {period_low:g}。"
+                )
+                lines.append("逐日行情：")
+                for row in data_rows:
+                    parts = []
+                    for label, i in (('日期', idx_date), ('开', idx_open), ('高', idx_high),
+                                     ('低', idx_low), ('收', idx_close), ('量', idx_vol)):
+                        if i is not None and i < len(row) and str(row[i]).strip():
+                            parts.append(f"{label} {str(row[i]).strip()}")
+                    if parts:
+                        lines.append("  " + "，".join(parts))
+                return "\n".join(lines)
+
+        # 通用表格：逐行键值对转写
+        for row in data_rows:
+            pairs = [f"{header[i]}: {row[i].strip()}"
+                     for i in range(min(len(header), len(row))) if row[i].strip()]
+            if pairs:
+                lines.append("  " + "；".join(pairs))
+        return "\n".join(lines)
     
     @classmethod
     def extract_from_multiple(cls, file_paths: List[str]) -> str:

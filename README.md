@@ -26,19 +26,21 @@
 
 ## ⚡ Overview
 
-**MiroFish** is a next-generation AI prediction engine powered by multi-agent technology. By extracting seed information from the real world (such as breaking news, policy drafts, or financial signals), it automatically constructs a high-fidelity parallel digital world. Within this space, thousands of intelligent agents with independent personalities, long-term memory, and behavioral logic freely interact and undergo social evolution. You can inject variables dynamically from a "God's-eye view" to precisely deduce future trajectories — **rehearse the future in a digital sandbox, and win decisions after countless simulations**.
+**MiroFish** is a next-generation AI prediction engine for **financial market forecasting**, powered by multi-agent technology. By ingesting real market data (price history, macroeconomic indicators, research reports, policy statements), it automatically constructs a high-fidelity parallel market world. Within this space, thousands of intelligent agents — retail investors, institutional traders, fund managers, sell-side analysts, central bankers and financial media — with independent personalities, long-term memory, and trading logic interact and react to events. You can inject scenarios dynamically from a "God's-eye view" to deduce how prices, capital flows and market sentiment may evolve — **rehearse the market in a digital sandbox before you make the decision**.
 
-> You only need to: Upload seed materials (data analysis reports or interesting novel stories) and describe your prediction requirements in natural language</br>
-> MiroFish will return: A detailed prediction report and a deeply interactive high-fidelity digital world
+> You only need to: Pull live market data or upload seed materials (research reports, OHLCV CSV files, policy drafts) and describe your forecasting question in natural language</br>
+> MiroFish will return: A detailed market prediction report and a deeply interactive high-fidelity market simulation
 
 ### Our Vision
 
-MiroFish is dedicated to creating a swarm intelligence mirror that maps reality. By capturing the collective emergence triggered by individual interactions, we break through the limitations of traditional prediction:
+MiroFish is dedicated to creating a swarm intelligence mirror of financial markets. By capturing the collective emergence triggered by participant interactions, we break through the limitations of traditional forecasting:
 
-- **At the Macro Level**: We are a rehearsal laboratory for decision-makers, allowing policies and public relations to be tested at zero risk
-- **At the Micro Level**: We are a creative sandbox for individual users — whether deducing novel endings or exploring imaginative scenarios, everything can be fun, playful, and accessible
+- **For Institutions**: A risk-free rehearsal lab for stress-testing macro scenarios — rate decisions, earnings surprises, policy shifts — before committing capital
+- **For Individual Investors**: An accessible sandbox to explore "what if" market scenarios across stocks, indices and the macro environment
 
-From serious predictions to playful simulations, we let every "what if" see its outcome, making it possible to predict anything.
+From central bank decisions to single-stock catalysts, we let every market "what if" play out, making it possible to forecast the market.
+
+> **Example scenarios**: *"If the Fed hikes 25bps at the next meeting, how will tech stocks and Treasury yields react?"* · *"If this company misses earnings guidance, how will institutional and retail flows diverge?"*
 
 ## 🌐 Live Demo
 
@@ -126,6 +128,18 @@ LLM_MODEL_NAME=qwen-plus
 # Free monthly quota is sufficient for simple usage: https://app.getzep.com/
 ZEP_API_KEY=your_zep_api_key
 ```
+
+**Optional — Market Data Sources:**
+
+```env
+# Stooq is used by default for stock/index/FX/commodity history — no API key required.
+# Alpha Vantage (optional): free key at https://www.alphavantage.co/support/#api-key
+ALPHA_VANTAGE_API_KEY=your_alpha_vantage_key
+# FRED macroeconomic data (optional): free key at https://fred.stlouisfed.org/docs/api/api_key.html
+FRED_API_KEY=your_fred_api_key
+```
+
+Fetch live market data as simulation seed material via `POST /api/graph/market-data/fetch`, or upload an OHLCV `.csv` file directly — both are converted into market seed text automatically.
 
 #### 2. Install Dependencies
 
