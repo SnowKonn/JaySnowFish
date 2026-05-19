@@ -631,10 +631,13 @@ def fetch_market_data():
 
     请求体（JSON）：
     {
-        "stocks": ["aapl.us", "^spx"],          // Stooq 标的代码
-        "fred_series": ["FEDFUNDS", "UNRATE"],  // FRED 宏观序列代码
-        "lookback": 60,                          // 可选，取最近 N 个交易日
-        "use_alpha_vantage": false               // 可选，股票改用 Alpha Vantage
+        "stocks": ["AAPL", "^GSPC"],            // 标的代码（格式取决于 stock_source）
+        "stock_source": "yahoo",                 // stooq / yahoo / alpha_vantage
+        "fred_series": ["FEDFUNDS", "UNRATE"],   // FRED 宏观序列代码（需 FRED_API_KEY）
+        "oecd_queries": ["..."],                  // OECD SDMX 查询路径
+        "ecos_series": ["722Y001",                // 韩国银行 ECOS，字符串或对象
+                        {"stat_code": "901Y009", "item_code": "0", "cycle": "M"}],
+        "lookback": 60                            // 可选，取最近 N 个交易日/观测点
     }
     """
     try:
@@ -642,21 +645,25 @@ def fetch_market_data():
 
         data = request.get_json(silent=True) or {}
         stocks = data.get('stocks') or []
+        stock_source = data.get('stock_source', 'stooq')
         fred_series = data.get('fred_series') or []
+        oecd_queries = data.get('oecd_queries') or []
+        ecos_series = data.get('ecos_series') or []
         lookback = data.get('lookback')
-        use_alpha_vantage = bool(data.get('use_alpha_vantage', False))
 
-        if not stocks and not fred_series:
+        if not any([stocks, fred_series, oecd_queries, ecos_series]):
             return jsonify({
                 "success": False,
-                "error": "请至少提供 stocks 或 fred_series 之一"
+                "error": "请至少提供 stocks / fred_series / oecd_queries / ecos_series 之一"
             }), 400
 
         seed_text = build_market_seed(
             stocks=stocks,
+            stock_source=stock_source,
             fred_series=fred_series,
+            oecd_queries=oecd_queries,
+            ecos_series=ecos_series,
             lookback=lookback,
-            use_alpha_vantage=use_alpha_vantage,
         )
 
         return jsonify({

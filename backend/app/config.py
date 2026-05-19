@@ -43,10 +43,18 @@ class Config:
     # ===== 金融市场数据源配置 =====
     # Stooq：免费、无需密钥，提供股票/指数/外汇/商品的历史与日线数据
     STOOQ_BASE_URL = os.environ.get('STOOQ_BASE_URL', 'https://stooq.com/q/d/l/')
+    # Yahoo Finance：免费、无需密钥，通过公开 chart 接口抓取行情
+    YAHOO_CHART_BASE_URL = os.environ.get(
+        'YAHOO_CHART_BASE_URL', 'https://query1.finance.yahoo.com/v8/finance/chart/')
     # Alpha Vantage：股票/外汇/加密货币行情（需免费 API Key）
     ALPHA_VANTAGE_API_KEY = os.environ.get('ALPHA_VANTAGE_API_KEY')
     # FRED：美联储宏观经济数据（利率、CPI、失业率等，需免费 API Key）
     FRED_API_KEY = os.environ.get('FRED_API_KEY')
+    # OECD：经合组织宏观经济数据，免费、无需密钥（SDMX-JSON 接口）
+    OECD_SDMX_BASE_URL = os.environ.get(
+        'OECD_SDMX_BASE_URL', 'https://sdmx.oecd.org/public/rest/data/')
+    # 韩国银行 ECOS：韩国宏观经济统计（需免费 API Key）
+    ECOS_API_KEY = os.environ.get('ECOS_API_KEY')
     # 默认市场数据抓取条数（生成种子文本时取最近 N 个交易日）
     MARKET_DATA_DEFAULT_LOOKBACK = int(os.environ.get('MARKET_DATA_DEFAULT_LOOKBACK', '60'))
     
