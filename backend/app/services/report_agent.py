@@ -923,32 +923,32 @@ class ReportAgent:
                 "name": "insight_forge",
                 "description": TOOL_DESC_INSIGHT_FORGE,
                 "parameters": {
-                    "query": "你想深入分析的问题或话题",
-                    "report_context": "当前报告章节的上下文（可选，有助于生成更精准的子问题）"
+                    "query": "심층 분석하고 싶은 질문이나 주제",
+                    "report_context": "현재 보고서 섹션의 컨텍스트 (선택사항, 더 정확한 하위 질문 생성에 도움)"
                 }
             },
             "panorama_search": {
                 "name": "panorama_search",
                 "description": TOOL_DESC_PANORAMA_SEARCH,
                 "parameters": {
-                    "query": "搜索查询，用于相关性排序",
-                    "include_expired": "是否包含过期/历史内容（默认True）"
+                    "query": "검색 쿼리, 관련성 정렬에 사용",
+                    "include_expired": "만료/기록 콘텐츠 포함 여부 (기본값 True)"
                 }
             },
             "quick_search": {
                 "name": "quick_search",
                 "description": TOOL_DESC_QUICK_SEARCH,
                 "parameters": {
-                    "query": "搜索查询字符串",
-                    "limit": "返回结果数量（可选，默认10）"
+                    "query": "검색 쿼리 문자열",
+                    "limit": "반환 결과 개수 (선택사항, 기본값 10)"
                 }
             },
             "interview_agents": {
                 "name": "interview_agents",
                 "description": TOOL_DESC_INTERVIEW_AGENTS,
                 "parameters": {
-                    "interview_topic": "采访主题或需求描述（如：'了解学生对宿舍甲醛事件的看法'）",
-                    "max_agents": "最多采访的Agent数量（可选，默认5，最大10）"
+                    "interview_topic": "인터뷰 주제 또는 요구사항 설명 (예: '기숙사 포름알데히드 사건에 대한 학생들의 의견 파악')",
+                    "max_agents": "최대 인터뷰할 Agent 수 (선택사항, 기본값 5, 최대 10)"
                 }
             }
         }
@@ -1858,7 +1858,7 @@ class ReportAgent:
             
             # 결과를 메시지에 추가
             messages.append({"role": "assistant", "content": response})
-            observation = "\n".join([f"[{r['tool']}结果]\n{r['result']}" for r in tool_results])
+            observation = "\n".join([f"[{r['tool']} 결과]\n{r['result']}" for r in tool_results])
             messages.append({
                 "role": "user",
                 "content": observation + CHAT_OBSERVATION_SUFFIX

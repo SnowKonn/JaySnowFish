@@ -166,7 +166,7 @@ class SimulationRunState:
             "simulated_hours": self.simulated_hours,
             "total_simulation_hours": self.total_simulation_hours,
             "progress_percent": round(self.current_round / max(self.total_rounds, 1) * 100, 1),
-            # 各平台独立轮次和时间
+            # 각 플랫폼 독립 라운드 및 시간
             "twitter_current_round": self.twitter_current_round,
             "reddit_current_round": self.reddit_current_round,
             "twitter_simulated_hours": self.twitter_simulated_hours,
@@ -414,9 +414,9 @@ class SimulationRunner:
             #   simulation.log        - 메인 프로세스 로그
             
             cmd = [
-                sys.executable,  # Python解释器
+                sys.executable,  # Python 인터프리터
                 script_path,
-                "--config", config_path,  # 使用完整配置文件路径
+                "--config", config_path,  # 전체 설정 파일 경로 사용
             ]
             
             # 최대 라운드가 지정된 경우 명령줄 인수에 추가
@@ -439,7 +439,7 @@ class SimulationRunner:
                 cmd,
                 cwd=sim_dir,
                 stdout=main_log_file,
-                stderr=subprocess.STDOUT,  # stderr 也写入同一个文件
+                stderr=subprocess.STDOUT,  # stderr도 같은 파일에 기록
                 text=True,
                 encoding='utf-8',  # 명시적 인코딩 지정
                 bufsize=1,
@@ -624,11 +624,11 @@ class SimulationRunner:
                                     if platform == "twitter":
                                         state.twitter_completed = True
                                         state.twitter_running = False
-                                        logger.info(f"Twitter 模拟已完成: {state.simulation_id}, total_rounds={action_data.get('total_rounds')}, total_actions={action_data.get('total_actions')}")
+                                        logger.info(f"Twitter 시뮬레이션 완료: {state.simulation_id}, total_rounds={action_data.get('total_rounds')}, total_actions={action_data.get('total_actions')}")
                                     elif platform == "reddit":
                                         state.reddit_completed = True
                                         state.reddit_running = False
-                                        logger.info(f"Reddit 模拟已完成: {state.simulation_id}, total_rounds={action_data.get('total_rounds')}, total_actions={action_data.get('total_actions')}")
+                                        logger.info(f"Reddit 시뮬레이션 완료: {state.simulation_id}, total_rounds={action_data.get('total_rounds')}, total_actions={action_data.get('total_actions')}")
                                     
                                     # 모든 활성화된 플랫폼이 완료되었는지 확인
                                     # 하나의 플랫폼만 실행된 경우 해당 플랫폼만 확인
@@ -1455,7 +1455,7 @@ class SimulationRunner:
         """
         sim_dir = os.path.join(cls.RUN_STATE_DIR, simulation_id)
         if not os.path.exists(sim_dir):
-            raise ValueError(f"模拟不存在: {simulation_id}")
+            raise ValueError(f"시뮬레이션이 존재하지 않습니다: {simulation_id}")
 
         ipc_client = SimulationIPCClient(sim_dir)
 

@@ -540,28 +540,28 @@ class SimulationConfigGenerator:
         # 최대 허용값 계산 (agent 수의 80%)
         max_agents_allowed = max(1, int(num_entities * 0.9))
         
-        prompt = f"""基于以下模拟需求，生成时间模拟配置。
+        prompt = f"""다음 시뮬레이션 요구사항을 기반으로 시간 시뮬레이션 설정을 생성하세요.
 
 {context_truncated}
 
-## 任务
-请生成时间配置JSON。
+## 작업
+시간 설정 JSON을 생성하세요.
 
-### 基本原则（仅供参考，需根据具体事件和参与群体灵活调整）：
-- 请根据模拟场景推断目标用户群体所在时区和作息习惯，以下为东八区(UTC+8)的参考示例
-- 凌晨0-5点几乎无人活动（活跃度系数0.05）
-- 早上6-8点逐渐活跃（活跃度系数0.4）
-- 工作时间9-18点中等活跃（活跃度系数0.7）
-- 晚间19-22点是高峰期（活跃度系数1.5）
-- 23点后活跃度下降（活跃度系数0.5）
-- 一般规律：凌晨低活跃、早间渐增、工作时段中等、晚间高峰
-- **重要**：以下示例值仅供参考，你需要根据事件性质、参与群体特点来调整具体时段
-  - 例如：学生群体高峰可能是21-23点；媒体全天活跃；官方机构只在工作时间
-  - 例如：突发热点可能导致深夜也有讨论，off_peak_hours 可适当缩短
+### 기본 원칙 (참고용, 구체적인 이벤트와 참여 그룹에 따라 유연하게 조정 필요):
+- 시뮬레이션 시나리오에 따라 대상 사용자 그룹의 시간대와 생활 패턴을 추론하세요. 아래는 UTC+9(한국 시간) 참고 예시입니다
+- 새벽 0-5시 거의 활동 없음 (활성도 계수 0.05)
+- 아침 6-8시 점점 활발해짐 (활성도 계수 0.4)
+- 업무 시간 9-18시 중간 정도 활발 (활성도 계수 0.7)
+- 저녁 19-22시 피크 시간 (활성도 계수 1.5)
+- 23시 이후 활성도 감소 (활성도 계수 0.5)
+- 일반 규칙: 새벽 저활성, 아침 점증, 업무 시간 중간, 저녁 피크
+- **중요**: 아래 예시 값은 참고용이며, 이벤트 성격과 참여 그룹 특성에 따라 구체적인 시간대를 조정해야 함
+  - 예: 학생 그룹 피크는 21-23시; 미디어는 하루 종일 활발; 공식 기관은 업무 시간에만
+  - 예: 긴급 핫이슈는 심야에도 토론이 있을 수 있으며, off_peak_hours를 적절히 단축 가능
 
-### 返回JSON格式（不要markdown）
+### JSON 형식으로 반환 (마크다운 금지)
 
-示例：
+예시:
 {{
     "total_simulation_hours": 72,
     "minutes_per_round": 60,
@@ -571,21 +571,21 @@ class SimulationConfigGenerator:
     "off_peak_hours": [0, 1, 2, 3, 4, 5],
     "morning_hours": [6, 7, 8],
     "work_hours": [9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
-    "reasoning": "针对该事件的时间配置说明"
+    "reasoning": "해당 이벤트에 대한 시간 설정 설명"
 }}
 
-字段说明：
-- total_simulation_hours (int): 模拟总时长，24-168小时，突发事件短、持续话题长
-- minutes_per_round (int): 每轮时长，30-120分钟，建议60分钟
-- agents_per_hour_min (int): 每小时最少激活Agent数（取值范围: 1-{max_agents_allowed}）
-- agents_per_hour_max (int): 每小时最多激活Agent数（取值范围: 1-{max_agents_allowed}）
-- peak_hours (int数组): 高峰时段，根据事件参与群体调整
-- off_peak_hours (int数组): 低谷时段，通常深夜凌晨
-- morning_hours (int数组): 早间时段
-- work_hours (int数组): 工作时段
-- reasoning (string): 简要说明为什么这样配置"""
+필드 설명:
+- total_simulation_hours (int): 총 시뮬레이션 시간, 24-168시간, 긴급 이벤트는 짧게, 지속 토픽은 길게
+- minutes_per_round (int): 라운드당 시간, 30-120분, 60분 권장
+- agents_per_hour_min (int): 시간당 최소 활성화 Agent 수 (범위: 1-{max_agents_allowed})
+- agents_per_hour_max (int): 시간당 최대 활성화 Agent 수 (범위: 1-{max_agents_allowed})
+- peak_hours (int 배열): 피크 시간대, 이벤트 참여 그룹에 따라 조정
+- off_peak_hours (int 배열): 비수기 시간대, 보통 심야 새벽
+- morning_hours (int 배열): 아침 시간대
+- work_hours (int 배열): 업무 시간대
+- reasoning (string): 이 설정이 왜 적합한지 간략히 설명"""
 
-        system_prompt = "你是社交媒体模拟专家。返回纯JSON格式，时间配置需符合模拟场景中目标用户群体的作息习惯。"
+        system_prompt = "당신은 소셜 미디어 시뮬레이션 전문가입니다. 순수 JSON 형식으로 반환하며, 시간 설정은 시뮬레이션 시나리오의 대상 사용자 그룹 생활 패턴에 맞아야 합니다."
         system_prompt = f"{system_prompt}\n\n{get_language_instruction()}"
 
         try:
@@ -673,36 +673,36 @@ class SimulationConfigGenerator:
         # 설정된 컨텍스트 절단 길이 사용
         context_truncated = context[:self.EVENT_CONFIG_CONTEXT_LENGTH]
         
-        prompt = f"""基于以下模拟需求，生成事件配置。
+        prompt = f"""다음 시뮬레이션 요구사항을 기반으로 이벤트 설정을 생성하세요.
 
-模拟需求: {simulation_requirement}
+시뮬레이션 요구사항: {simulation_requirement}
 
 {context_truncated}
 
-## 可用实体类型及示例
+## 사용 가능한 엔티티 유형 및 예시
 {type_info}
 
-## 任务
-请生成事件配置JSON：
-- 提取热点话题关键词
-- 描述舆论发展方向
-- 设计初始帖子内容，**每个帖子必须指定 poster_type（发布者类型）**
+## 작업
+이벤트 설정 JSON을 생성하세요:
+- 핫토픽 키워드 추출
+- 여론 발전 방향 설명
+- 초기 게시물 내용 설계, **각 게시물에 poster_type(게시자 유형)을 반드시 지정**
 
-**重要**: poster_type 必须从上面的"可用实体类型"中选择，这样初始帖子才能分配给合适的 Agent 发布。
-例如：官方声明应由 Official/University 类型发布，新闻由 MediaOutlet 发布，学生观点由 Student 发布。
+**중요**: poster_type은 위의 "사용 가능한 엔티티 유형"에서 선택해야 합니다. 그래야 초기 게시물이 적합한 Agent에게 할당되어 게시됩니다.
+예: 공식 성명은 Official/University 유형이 게시, 뉴스는 MediaOutlet이 게시, 학생 의견은 Student가 게시.
 
-返回JSON格式（不要markdown）：
+JSON 형식으로 반환 (마크다운 금지):
 {{
-    "hot_topics": ["关键词1", "关键词2", ...],
-    "narrative_direction": "<舆论发展方向描述>",
+    "hot_topics": ["키워드1", "키워드2", ...],
+    "narrative_direction": "<여론 발전 방향 설명>",
     "initial_posts": [
-        {{"content": "帖子内容", "poster_type": "实体类型（必须从可用类型中选择）"}},
+        {{"content": "게시물 내용", "poster_type": "엔티티 유형 (사용 가능한 유형에서 선택)"}},
         ...
     ],
-    "reasoning": "<简要说明>"
+    "reasoning": "<간략한 설명>"
 }}"""
 
-        system_prompt = "你是舆论分析专家。返回纯JSON格式。注意 poster_type 必须精确匹配可用实体类型。"
+        system_prompt = "당신은 여론 분석 전문가입니다. 순수 JSON 형식으로 반환하세요. poster_type은 사용 가능한 엔티티 유형과 정확히 일치해야 합니다."
         system_prompt = f"{system_prompt}\n\n{get_language_instruction()}\nIMPORTANT: The 'poster_type' field value MUST be in English PascalCase exactly matching the available entity types. Only 'content', 'narrative_direction', 'hot_topics' and 'reasoning' fields should use the specified language."
 
         try:
@@ -830,43 +830,43 @@ class SimulationConfigGenerator:
                 "summary": e.summary[:summary_len] if e.summary else ""
             })
         
-        prompt = f"""基于以下信息，为每个实体生成社交媒体活动配置。
+        prompt = f"""다음 정보를 기반으로 각 엔티티에 대한 소셜 미디어 활동 설정을 생성하세요.
 
-模拟需求: {simulation_requirement}
+시뮬레이션 요구사항: {simulation_requirement}
 
-## 实体列表
+## 엔티티 목록
 ```json
 {json.dumps(entity_list, ensure_ascii=False, indent=2)}
 ```
 
-## 任务
-为每个实体生成活动配置，注意：
-- **时间符合目标用户群体作息**：以下为参考（东八区），请根据模拟场景调整
-- **官方机构**（University/GovernmentAgency）：活跃度低(0.1-0.3)，工作时间(9-17)活动，响应慢(60-240分钟)，影响力高(2.5-3.0)
-- **媒体**（MediaOutlet）：活跃度中(0.4-0.6)，全天活动(8-23)，响应快(5-30分钟)，影响力高(2.0-2.5)
-- **个人**（Student/Person/Alumni）：活跃度高(0.6-0.9)，主要晚间活动(18-23)，响应快(1-15分钟)，影响力低(0.8-1.2)
-- **公众人物/专家**：活跃度中(0.4-0.6)，影响力中高(1.5-2.0)
+## 작업
+각 엔티티에 대한 활동 설정을 생성하세요, 주의사항:
+- **시간은 대상 사용자 그룹 생활 패턴에 맞춰야 함**: 아래는 참고용(UTC+9 한국 시간), 시뮬레이션 시나리오에 따라 조정
+- **공식 기관** (University/GovernmentAgency): 활성도 낮음(0.1-0.3), 업무 시간(9-17) 활동, 응답 느림(60-240분), 영향력 높음(2.5-3.0)
+- **미디어** (MediaOutlet): 활성도 중간(0.4-0.6), 종일 활동(8-23), 응답 빠름(5-30분), 영향력 높음(2.0-2.5)
+- **개인** (Student/Person/Alumni): 활성도 높음(0.6-0.9), 주로 저녁 활동(18-23), 응답 빠름(1-15분), 영향력 낮음(0.8-1.2)
+- **공인/전문가**: 활성도 중간(0.4-0.6), 영향력 중상(1.5-2.0)
 
-返回JSON格式（不要markdown）：
+JSON 형식으로 반환 (마크다운 금지):
 {{
     "agent_configs": [
         {{
-            "agent_id": <必须与输入一致>,
+            "agent_id": <입력과 반드시 일치>,
             "activity_level": <0.0-1.0>,
-            "posts_per_hour": <发帖频率>,
-            "comments_per_hour": <评论频率>,
-            "active_hours": [<活跃小时列表，考虑中国人作息>],
-            "response_delay_min": <最小响应延迟分钟>,
-            "response_delay_max": <最大响应延迟分钟>,
-            "sentiment_bias": <-1.0到1.0>,
+            "posts_per_hour": <게시 빈도>,
+            "comments_per_hour": <댓글 빈도>,
+            "active_hours": [<활성 시간 목록, 한국인 생활 패턴 고려>],
+            "response_delay_min": <최소 응답 지연 분>,
+            "response_delay_max": <최대 응답 지연 분>,
+            "sentiment_bias": <-1.0에서 1.0>,
             "stance": "<supportive/opposing/neutral/observer>",
-            "influence_weight": <影响力权重>
+            "influence_weight": <영향력 가중치>
         }},
         ...
     ]
 }}"""
 
-        system_prompt = "你是社交媒体行为分析专家。返回纯JSON，配置需符合模拟场景中目标用户群体的作息习惯。"
+        system_prompt = "당신은 소셜 미디어 행동 분석 전문가입니다. 순수 JSON으로 반환하며, 설정은 시뮬레이션 시나리오의 대상 사용자 그룹 생활 패턴에 맞아야 합니다."
         system_prompt = f"{system_prompt}\n\n{get_language_instruction()}\nIMPORTANT: The 'stance' field value MUST be one of the English strings: 'supportive', 'opposing', 'neutral', 'observer'. All JSON field names and numeric values must remain unchanged. Only natural language text fields should use the specified language."
 
         try:

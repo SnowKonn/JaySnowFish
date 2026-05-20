@@ -62,7 +62,7 @@ class OasisAgentProfile:
         """Reddit 플랫폼 형식으로 변환"""
         profile = {
             "user_id": self.user_id,
-            "username": self.user_name,  # OASIS 库要求字段名为 username（无下划线）
+            "username": self.user_name,  # OASIS 라이브러리에서 필드명을 username으로 요구 (밑줄 없음)
             "name": self.name,
             "bio": self.bio,
             "persona": self.persona,
@@ -90,7 +90,7 @@ class OasisAgentProfile:
         """Twitter 플랫폼 형식으로 변환"""
         profile = {
             "user_id": self.user_id,
-            "username": self.user_name,  # OASIS 库要求字段名为 username（无下划线）
+            "username": self.user_name,  # OASIS 라이브러리에서 필드명을 username으로 요구 (밑줄 없음)
             "name": self.name,
             "bio": self.bio,
             "persona": self.persona,
@@ -811,10 +811,10 @@ class OasisProfileGenerator:
             return {
                 "bio": f"Official account for {entity_name}. News and updates.",
                 "persona": f"{entity_name} is a media entity that reports news and facilitates public discourse. The account shares timely updates and engages with the audience on current events.",
-                "age": 30,  # 机构虚拟年龄
-                "gender": "other",  # 机构使用other
-                "mbti": "ISTJ",  # 机构风格：严谨保守
-                "country": "中国",
+                "age": 30,  # 기관 가상 나이
+                "gender": "other",  # 기관은 other 사용
+                "mbti": "ISTJ",  # 기관 스타일: 엄격하고 보수적
+                "country": "한국",
                 "profession": "Media",
                 "interested_topics": ["General News", "Current Events", "Public Affairs"],
             }
@@ -823,10 +823,10 @@ class OasisProfileGenerator:
             return {
                 "bio": f"Official account of {entity_name}.",
                 "persona": f"{entity_name} is an institutional entity that communicates official positions, announcements, and engages with stakeholders on relevant matters.",
-                "age": 30,  # 机构虚拟年龄
-                "gender": "other",  # 机构使用other
-                "mbti": "ISTJ",  # 机构风格：严谨保守
-                "country": "中国",
+                "age": 30,  # 기관 가상 나이
+                "gender": "other",  # 기관은 other 사용
+                "mbti": "ISTJ",  # 기관 스타일: 엄격하고 보수적
+                "country": "한국",
                 "profession": entity_type,
                 "interested_topics": ["Public Policy", "Community", "Official Announcements"],
             }

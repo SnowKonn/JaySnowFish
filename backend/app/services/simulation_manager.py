@@ -520,10 +520,10 @@ class SimulationManager:
                 "parallel": f"python {scripts_dir}/run_parallel_simulation.py --config {config_path}",
             },
             "instructions": (
-                f"1. 激活conda环境: conda activate MiroFish\n"
-                f"2. 运行模拟 (脚本位于 {scripts_dir}):\n"
-                f"   - 单独运行Twitter: python {scripts_dir}/run_twitter_simulation.py --config {config_path}\n"
-                f"   - 单独运行Reddit: python {scripts_dir}/run_reddit_simulation.py --config {config_path}\n"
-                f"   - 并行运行双平台: python {scripts_dir}/run_parallel_simulation.py --config {config_path}"
+                f"1. conda 환경 활성화: conda activate MiroFish\n"
+                f"2. 시뮬레이션 실행 (스크립트 위치: {scripts_dir}):\n"
+                f"   - Twitter 단독 실행: python {scripts_dir}/run_twitter_simulation.py --config {config_path}\n"
+                f"   - Reddit 단독 실행: python {scripts_dir}/run_reddit_simulation.py --config {config_path}\n"
+                f"   - 양 플랫폼 병렬 실행: python {scripts_dir}/run_parallel_simulation.py --config {config_path}"
             )
         }
