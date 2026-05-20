@@ -4,6 +4,9 @@
     <nav class="navbar">
       <div class="nav-brand">MIROFISH</div>
       <div class="nav-links">
+        <router-link to="/market" class="nav-link market-link">
+          Market Simulation <span class="arrow">→</span>
+        </router-link>
         <LanguageSwitcher />
         <a href="https://github.com/666ghj/MiroFish" target="_blank" class="github-link">
           {{ $t('nav.visitGithub') }} <span class="arrow">↗</span>
@@ -374,6 +377,25 @@ const startSimulation = () => {
 
 .github-link:hover {
   opacity: 0.8;
+}
+
+.market-link {
+  color: var(--orange);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid var(--orange);
+  transition: all 0.2s;
+}
+
+.market-link:hover {
+  background: var(--orange);
+  color: var(--black);
 }
 
 .arrow {
