@@ -892,7 +892,7 @@ class OasisProfileGenerator:
                 return
             
             with lock:
-                # 过滤出已生成的 profiles
+                # 이미 생성된 profiles 필터링
                 existing_profiles = [p for p in profiles if p is not None]
                 if not existing_profiles:
                     return
