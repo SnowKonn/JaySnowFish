@@ -1,6 +1,6 @@
 """
-本体生成服务
-接口1：分析文本内容，生成适合金融市场预测模拟的实体和关系类型定义
+온톨로지 생성 서비스
+인터페이스1: 텍스트 내용을 분석하여 금융시장 예측 시뮬레이션에 적합한 엔티티 및 관계 유형 정의 생성
 """
 
 import json
@@ -14,169 +14,169 @@ logger = logging.getLogger(__name__)
 
 
 def _to_pascal_case(name: str) -> str:
-    """将任意格式的名称转换为 PascalCase（如 'works_for' -> 'WorksFor', 'person' -> 'Person'）"""
-    # 按非字母数字字符分割
+    """임의 형식의 이름을 PascalCase로 변환 (예: 'works_for' -> 'WorksFor', 'person' -> 'Person')"""
+    # 비알파벳/숫자 문자로 분할
     parts = re.split(r'[^a-zA-Z0-9]+', name)
-    # 再按 camelCase 边界分割（如 'camelCase' -> ['camel', 'Case']）
+    # camelCase 경계로 추가 분할 (예: 'camelCase' -> ['camel', 'Case'])
     words = []
     for part in parts:
         words.extend(re.sub(r'([a-z])([A-Z])', r'\1_\2', part).split('_'))
-    # 每个词首字母大写，过滤空串
+    # 각 단어 첫 글자 대문자화, 빈 문자열 필터링
     result = ''.join(word.capitalize() for word in words if word)
     return result if result else 'Unknown'
 
 
-# 本体生成的系统提示词
-ONTOLOGY_SYSTEM_PROMPT = """你是一个专业的知识图谱本体设计专家。你的任务是分析给定的文本内容和预测需求，设计适合**金融市场预测模拟**的实体类型和关系类型。
+# 온톨로지 생성 시스템 프롬프트
+ONTOLOGY_SYSTEM_PROMPT = """당신은 전문 지식 그래프 온톨로지 설계 전문가입니다. 주어진 텍스트 내용과 예측 요구사항을 분석하여 **금융시장 예측 시뮬레이션**에 적합한 엔티티 유형과 관계 유형을 설계하는 것이 당신의 임무입니다.
 
-**重要：你必须输出有效的JSON格式数据，不要输出任何其他内容。**
+**중요: 반드시 유효한 JSON 형식 데이터만 출력해야 하며, 다른 내용은 출력하지 마세요.**
 
-## 核心任务背景
+## 핵심 작업 배경
 
-我们正在构建一个**金融市场预测模拟系统**。在这个系统中：
-- 每个实体都是一个可以在市场中表达观点、做出交易决策、传播信息的"市场参与者"
-- 实体之间会相互影响：跟随、博弈、对冲、报道、监管
-- 我们需要模拟某一市场情景下各类参与者的反应、资金流向与价格走势
+우리는 **금융시장 예측 시뮬레이션 시스템**을 구축하고 있습니다. 이 시스템에서:
+- 각 엔티티는 시장에서 의견을 표명하고, 거래 결정을 내리고, 정보를 전파할 수 있는 "시장 참여자"입니다
+- 엔티티 간에 추종, 게임, 헤지, 보도, 규제 등의 상호 영향이 이루어집니다
+- 특정 시장 시나리오에서 각 참여자의 반응, 자금 흐름, 가격 동향을 시뮬레이션해야 합니다
 
-因此，**实体必须是真实存在的、能够在金融市场中行动或施加影响的主体**：
+따라서, **엔티티는 현실에서 실제로 존재하며, 금융시장에서 행동하거나 영향력을 행사할 수 있는 주체여야 합니다**:
 
-**可以是**：
-- 具体的个人（散户投资者、机构交易员、基金经理、卖方分析师、经济学家、上市公司高管、央行官员、财经记者）
-- 投资机构（对冲基金、资产管理公司、投资银行、券商、私募/公募基金）
-- 上市公司及其管理层
-- 中央银行、监管机构（证监会、美联储等）
-- 评级机构、财经媒体
-- 特定投资者群体的代表（如散户社群、量化基金阵营、ESG投资者等）
+**가능한 것**:
+- 구체적인 개인 (개인 투자자, 기관 트레이더, 펀드 매니저, 셀사이드 애널리스트, 경제학자, 상장사 임원, 중앙은행 관계자, 금융 기자)
+- 투자 기관 (헤지펀드, 자산운용사, 투자은행, 증권사, 사모/공모 펀드)
+- 상장회사 및 경영진
+- 중앙은행, 규제기관 (금융감독원, 연준 등)
+- 신용평가사, 금융 미디어
+- 특정 투자자 집단 대표 (개인투자자 커뮤니티, 퀀트 펀드 진영, ESG 투자자 등)
 
-**不可以是**：
-- 抽象概念（如"市场情绪"、"波动率"、"趋势"）
-- 主题/话题（如"加息周期"、"科技股估值"）
-- 金融产品本身（如"某只股票"、"某指数"——这些是被交易的标的，不是行动主体）
+**불가능한 것**:
+- 추상적 개념 ("시장 심리", "변동성", "트렌드" 등)
+- 주제/토픽 ("금리 인상 사이클", "테크주 밸류에이션" 등)
+- 금융상품 자체 ("특정 주식", "특정 지수" — 거래 대상이지 행동 주체가 아님)
 
-## 输出格式
+## 출력 형식
 
-请输出JSON格式，包含以下结构：
+다음 구조를 포함하는 JSON 형식으로 출력하세요:
 
 ```json
 {
     "entity_types": [
         {
-            "name": "实体类型名称（英文，PascalCase）",
-            "description": "简短描述（英文，不超过100字符）",
+            "name": "엔티티 유형 이름 (영문, PascalCase)",
+            "description": "간략한 설명 (영문, 100자 이내)",
             "attributes": [
                 {
-                    "name": "属性名（英文，snake_case）",
+                    "name": "속성명 (영문, snake_case)",
                     "type": "text",
-                    "description": "属性描述"
+                    "description": "속성 설명"
                 }
             ],
-            "examples": ["示例实体1", "示例实体2"]
+            "examples": ["예시 엔티티1", "예시 엔티티2"]
         }
     ],
     "edge_types": [
         {
-            "name": "关系类型名称（英文，UPPER_SNAKE_CASE）",
-            "description": "简短描述（英文，不超过100字符）",
+            "name": "관계 유형 이름 (영문, UPPER_SNAKE_CASE)",
+            "description": "간략한 설명 (영문, 100자 이내)",
             "source_targets": [
-                {"source": "源实体类型", "target": "目标实体类型"}
+                {"source": "소스 엔티티 유형", "target": "대상 엔티티 유형"}
             ],
             "attributes": []
         }
     ],
-    "analysis_summary": "对文本内容的简要分析说明"
+    "analysis_summary": "텍스트 내용에 대한 간략한 분석 설명"
 }
 ```
 
-## 设计指南（极其重要！）
+## 설계 가이드 (매우 중요!)
 
-### 1. 实体类型设计 - 必须严格遵守
+### 1. 엔티티 유형 설계 - 반드시 엄격히 준수
 
-**数量要求：必须正好10个实体类型**
+**수량 요구: 정확히 10개의 엔티티 유형 필수**
 
-**层次结构要求（必须同时包含具体类型和兜底类型）**：
+**계층 구조 요구 (구체적 유형과 폴백 유형을 반드시 함께 포함)**:
 
-你的10个实体类型必须包含以下层次：
+10개의 엔티티 유형에는 다음 계층이 포함되어야 합니다:
 
-A. **兜底类型（必须包含，放在列表最后2个）**：
-   - `Person`: 任何自然人个体的兜底类型。当一个人不属于其他更具体的人物类型时，归入此类。
-   - `Organization`: 任何组织机构的兜底类型。当一个组织不属于其他更具体的组织类型时，归入此类。
+A. **폴백 유형 (필수 포함, 목록 마지막 2개에 배치)**:
+   - `Person`: 모든 자연인 개인의 폴백 유형. 다른 더 구체적인 인물 유형에 속하지 않을 때 이 유형으로 분류.
+   - `Organization`: 모든 조직 기관의 폴백 유형. 다른 더 구체적인 조직 유형에 속하지 않을 때 이 유형으로 분류.
 
-B. **具体类型（8个，根据文本内容设计）**：
-   - 针对文本中出现的主要市场参与者，设计更具体的类型
-   - 例如：如果情景涉及货币政策，可以有 `CentralBanker`, `Economist`, `Bank`
-   - 例如：如果情景涉及个股事件，可以有 `ListedCompany`, `SellSideAnalyst`, `HedgeFund`
+B. **구체적 유형 (8개, 텍스트 내용에 따라 설계)**:
+   - 텍스트에 나타나는 주요 시장 참여자에 대해 더 구체적인 유형 설계
+   - 예: 시나리오가 통화정책과 관련된 경우 `CentralBanker`, `Economist`, `Bank` 가능
+   - 예: 시나리오가 개별 종목 이벤트와 관련된 경우 `ListedCompany`, `SellSideAnalyst`, `HedgeFund` 가능
 
-**为什么需要兜底类型**：
-- 文本中会出现各种人物，如"某散户"、"匿名交易员"、"行业专家"
-- 如果没有专门的类型匹配，他们应该被归入 `Person`
-- 同理，小型机构、临时投资联盟等应该归入 `Organization`
+**폴백 유형이 필요한 이유**:
+- 텍스트에는 "어떤 개인투자자", "익명 트레이더", "업계 전문가" 등 다양한 인물이 등장
+- 전용 유형이 없으면 `Person`으로 분류해야 함
+- 마찬가지로 소규모 기관, 임시 투자 연합 등은 `Organization`으로 분류
 
-**具体类型的设计原则**：
-- 从文本中识别出高频出现或关键的市场参与者类型
-- 每个具体类型应该有明确的边界，避免重叠
-- description 必须清晰说明这个类型和兜底类型的区别
+**구체적 유형 설계 원칙**:
+- 텍스트에서 고빈도로 등장하거나 핵심적인 시장 참여자 유형 식별
+- 각 구체적 유형은 명확한 경계가 있어야 하며 중복 방지
+- description은 이 유형과 폴백 유형의 차이를 명확히 설명해야 함
 
-### 2. 关系类型设计
+### 2. 관계 유형 설계
 
-- 数量：6-10个
-- 关系应该反映金融市场中的真实联系（持仓、交易、覆盖、监管、影响等）
-- 确保关系的 source_targets 涵盖你定义的实体类型
+- 수량: 6-10개
+- 관계는 금융시장에서의 실제 연결을 반영해야 함 (포지션, 거래, 커버리지, 규제, 영향 등)
+- 관계의 source_targets가 정의한 엔티티 유형을 포함하도록 보장
 
-### 3. 属性设计
+### 3. 속성 설계
 
-- 每个实体类型1-3个关键属性
-- **注意**：属性名不能使用 `name`、`uuid`、`group_id`、`created_at`、`summary`（这些是系统保留字）
-- 推荐使用：`full_name`, `firm`, `role`, `asset_class`, `risk_appetite`, `aum`, `region` 等
+- 각 엔티티 유형당 1-3개의 핵심 속성
+- **주의**: 속성명으로 `name`, `uuid`, `group_id`, `created_at`, `summary` 사용 불가 (시스템 예약어)
+- 권장: `full_name`, `firm`, `role`, `asset_class`, `risk_appetite`, `aum`, `region` 등
 
-## 实体类型参考
+## 엔티티 유형 참조
 
-**个人类（具体）**：
-- RetailInvestor: 散户投资者
-- InstitutionalTrader: 机构交易员
-- FundManager: 基金经理
-- SellSideAnalyst: 卖方分析师
-- Economist: 经济学家
-- CorporateExecutive: 上市公司高管
-- CentralBanker: 央行官员
-- FinancialJournalist: 财经记者
+**개인 유형 (구체적)**:
+- RetailInvestor: 개인 투자자
+- InstitutionalTrader: 기관 트레이더
+- FundManager: 펀드 매니저
+- SellSideAnalyst: 셀사이드 애널리스트
+- Economist: 경제학자
+- CorporateExecutive: 상장사 임원
+- CentralBanker: 중앙은행 관계자
+- FinancialJournalist: 금융 기자
 
-**个人类（兜底）**：
-- Person: 任何自然人（不属于上述具体类型时使用）
+**개인 유형 (폴백)**:
+- Person: 모든 자연인 (위의 구체적 유형에 속하지 않을 때 사용)
 
-**组织类（具体）**：
-- HedgeFund: 对冲基金
-- AssetManager: 资产管理公司
-- InvestmentBank: 投资银行/券商
-- ListedCompany: 上市公司
-- CentralBank: 中央银行
-- RegulatoryAgency: 金融监管机构
-- RatingAgency: 信用评级机构
-- FinancialMediaOutlet: 财经媒体
+**조직 유형 (구체적)**:
+- HedgeFund: 헤지펀드
+- AssetManager: 자산운용사
+- InvestmentBank: 투자은행/증권사
+- ListedCompany: 상장회사
+- CentralBank: 중앙은행
+- RegulatoryAgency: 금융 규제기관
+- RatingAgency: 신용평가사
+- FinancialMediaOutlet: 금융 미디어
 
-**组织类（兜底）**：
-- Organization: 任何组织机构（不属于上述具体类型时使用）
+**조직 유형 (폴백)**:
+- Organization: 모든 조직 기관 (위의 구체적 유형에 속하지 않을 때 사용)
 
-## 关系类型参考
+## 관계 유형 참조
 
-- HOLDS_POSITION_IN: 持有……的仓位
-- TRADES_WITH: 与……进行交易
-- COVERS: 研究覆盖（分析师覆盖某公司）
-- ISSUES_GUIDANCE: 发布业绩指引/前瞻
-- RATES: 给出评级
-- REGULATES: 监管
-- SETS_POLICY: 制定货币/财政政策
-- REPORTS_ON: 报道
-- INFLUENCES: 影响（市场情绪/价格预期）
-- ADVISES: 提供投资建议
-- INVESTS_IN: 投资于
-- COMPETES_WITH: 竞争
+- HOLDS_POSITION_IN: 포지션 보유
+- TRADES_WITH: 거래
+- COVERS: 리서치 커버리지 (애널리스트가 회사를 커버)
+- ISSUES_GUIDANCE: 실적 가이던스/전망 발표
+- RATES: 등급 부여
+- REGULATES: 규제
+- SETS_POLICY: 통화/재정 정책 수립
+- REPORTS_ON: 보도
+- INFLUENCES: 영향 (시장 심리/가격 기대)
+- ADVISES: 투자 조언 제공
+- INVESTS_IN: 투자
+- COMPETES_WITH: 경쟁
 """
 
 
 class OntologyGenerator:
     """
-    本体生成器
-    分析文本内容，生成实体和关系类型定义
+    온톨로지 생성기
+    텍스트 내용을 분석하여 엔티티 및 관계 유형 정의 생성
     """
     
     def __init__(self, llm_client: Optional[LLMClient] = None):
@@ -189,17 +189,17 @@ class OntologyGenerator:
         additional_context: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        生成本体定义
-        
+        온톨로지 정의 생성
+
         Args:
-            document_texts: 文档文本列表
-            simulation_requirement: 模拟需求描述
-            additional_context: 额外上下文
-            
+            document_texts: 문서 텍스트 목록
+            simulation_requirement: 시뮬레이션 요구사항 설명
+            additional_context: 추가 컨텍스트
+
         Returns:
-            本体定义（entity_types, edge_types等）
+            온톨로지 정의 (entity_types, edge_types 등)
         """
-        # 构建用户消息
+        # 사용자 메시지 구성
         user_message = self._build_user_message(
             document_texts, 
             simulation_requirement,
@@ -213,19 +213,19 @@ class OntologyGenerator:
             {"role": "user", "content": user_message}
         ]
         
-        # 调用LLM
+        # LLM 호출
         result = self.llm_client.chat_json(
             messages=messages,
             temperature=0.3,
             max_tokens=4096
         )
         
-        # 验证和后处理
+        # 검증 및 후처리
         result = self._validate_and_process(result)
         
         return result
     
-    # 传给 LLM 的文本最大长度（5万字）
+    # LLM에 전달할 텍스트 최대 길이 (5만자)
     MAX_TEXT_LENGTH_FOR_LLM = 50000
     
     def _build_user_message(
@@ -234,62 +234,62 @@ class OntologyGenerator:
         simulation_requirement: str,
         additional_context: Optional[str]
     ) -> str:
-        """构建用户消息"""
-        
-        # 合并文本
+        """사용자 메시지 구성"""
+
+        # 텍스트 병합
         combined_text = "\n\n---\n\n".join(document_texts)
         original_length = len(combined_text)
-        
-        # 如果文本超过5万字，截断（仅影响传给LLM的内容，不影响图谱构建）
+
+        # 텍스트가 5만자를 초과하면 절단 (LLM에 전달되는 내용에만 영향, 그래프 구축에는 영향 없음)
         if len(combined_text) > self.MAX_TEXT_LENGTH_FOR_LLM:
             combined_text = combined_text[:self.MAX_TEXT_LENGTH_FOR_LLM]
-            combined_text += f"\n\n...(原文共{original_length}字，已截取前{self.MAX_TEXT_LENGTH_FOR_LLM}字用于本体分析)..."
+            combined_text += f"\n\n...(원문 총 {original_length}자, 온톨로지 분석을 위해 앞 {self.MAX_TEXT_LENGTH_FOR_LLM}자 추출)..."
         
-        message = f"""## 模拟需求
+        message = f"""## 시뮬레이션 요구사항
 
 {simulation_requirement}
 
-## 文档内容
+## 문서 내용
 
 {combined_text}
 """
-        
+
         if additional_context:
             message += f"""
-## 额外说明
+## 추가 설명
 
 {additional_context}
 """
-        
-        message += """
-请根据以上内容，设计适合金融市场预测模拟的实体类型和关系类型。
 
-**必须遵守的规则**：
-1. 必须正好输出10个实体类型
-2. 最后2个必须是兜底类型：Person（个人兜底）和 Organization（组织兜底）
-3. 前8个是根据文本内容设计的具体市场参与者类型
-4. 所有实体类型必须是现实中能在金融市场中行动或施加影响的主体，不能是抽象概念或金融产品本身
-5. 属性名不能使用 name、uuid、group_id 等保留字，用 full_name、org_name 等替代
+        message += """
+위 내용을 바탕으로 금융시장 예측 시뮬레이션에 적합한 엔티티 유형과 관계 유형을 설계하세요.
+
+**반드시 준수해야 할 규칙**:
+1. 정확히 10개의 엔티티 유형을 출력해야 함
+2. 마지막 2개는 반드시 폴백 유형: Person (개인 폴백)과 Organization (조직 폴백)
+3. 앞의 8개는 텍스트 내용에 따라 설계된 구체적 시장 참여자 유형
+4. 모든 엔티티 유형은 현실에서 금융시장에서 행동하거나 영향력을 행사할 수 있는 주체여야 하며, 추상적 개념이나 금융상품 자체 불가
+5. 속성명으로 name, uuid, group_id 등 예약어 사용 불가, full_name, org_name 등으로 대체
 """
         
         return message
     
     def _validate_and_process(self, result: Dict[str, Any]) -> Dict[str, Any]:
-        """验证和后处理结果"""
-        
-        # 确保必要字段存在
+        """검증 및 후처리 결과"""
+
+        # 필수 필드 존재 확인
         if "entity_types" not in result:
             result["entity_types"] = []
         if "edge_types" not in result:
             result["edge_types"] = []
         if "analysis_summary" not in result:
             result["analysis_summary"] = ""
-        
-        # 验证实体类型
-        # 记录原始名称到 PascalCase 的映射，用于后续修正 edge 的 source_targets 引用
+
+        # 엔티티 유형 검증
+        # 원본 이름에서 PascalCase로의 매핑 기록, 추후 edge의 source_targets 참조 수정에 사용
         entity_name_map = {}
         for entity in result["entity_types"]:
-            # 强制将 entity name 转为 PascalCase（Zep API 要求）
+            # 엔티티 이름을 PascalCase로 강제 변환 (Zep API 요구사항)
             if "name" in entity:
                 original_name = entity["name"]
                 entity["name"] = _to_pascal_case(original_name)
@@ -300,19 +300,19 @@ class OntologyGenerator:
                 entity["attributes"] = []
             if "examples" not in entity:
                 entity["examples"] = []
-            # 确保description不超过100字符
+            # description이 100자를 초과하지 않도록 보장
             if len(entity.get("description", "")) > 100:
                 entity["description"] = entity["description"][:97] + "..."
         
-        # 验证关系类型
+        # 관계 유형 검증
         for edge in result["edge_types"]:
-            # 强制将 edge name 转为 SCREAMING_SNAKE_CASE（Zep API 要求）
+            # 엣지 이름을 SCREAMING_SNAKE_CASE로 강제 변환 (Zep API 요구사항)
             if "name" in edge:
                 original_name = edge["name"]
                 edge["name"] = original_name.upper()
                 if edge["name"] != original_name:
                     logger.warning(f"Edge type name '{original_name}' auto-converted to '{edge['name']}'")
-            # 修正 source_targets 中的实体名称引用，与转换后的 PascalCase 保持一致
+            # source_targets의 엔티티 이름 참조 수정, 변환된 PascalCase와 일치하도록 유지
             for st in edge.get("source_targets", []):
                 if st.get("source") in entity_name_map:
                     st["source"] = entity_name_map[st["source"]]
@@ -325,11 +325,11 @@ class OntologyGenerator:
             if len(edge.get("description", "")) > 100:
                 edge["description"] = edge["description"][:97] + "..."
         
-        # Zep API 限制：最多 10 个自定义实体类型，最多 10 个自定义边类型
+        # Zep API 제한: 최대 10개 사용자 정의 엔티티 유형, 최대 10개 사용자 정의 엣지 유형
         MAX_ENTITY_TYPES = 10
         MAX_EDGE_TYPES = 10
 
-        # 去重：按 name 去重，保留首次出现的
+        # 중복 제거: name 기준으로 중복 제거, 첫 번째 출현 유지
         seen_names = set()
         deduped = []
         for entity in result["entity_types"]:
@@ -341,7 +341,7 @@ class OntologyGenerator:
                 logger.warning(f"Duplicate entity type '{name}' removed during validation")
         result["entity_types"] = deduped
 
-        # 兜底类型定义
+        # 폴백 유형 정의
         person_fallback = {
             "name": "Person",
             "description": "Any individual person not fitting other specific person types.",
@@ -362,12 +362,12 @@ class OntologyGenerator:
             "examples": ["small business", "community group"]
         }
         
-        # 检查是否已有兜底类型
+        # 폴백 유형 존재 여부 확인
         entity_names = {e["name"] for e in result["entity_types"]}
         has_person = "Person" in entity_names
         has_organization = "Organization" in entity_names
-        
-        # 需要添加的兜底类型
+
+        # 추가해야 할 폴백 유형
         fallbacks_to_add = []
         if not has_person:
             fallbacks_to_add.append(person_fallback)
@@ -377,18 +377,18 @@ class OntologyGenerator:
         if fallbacks_to_add:
             current_count = len(result["entity_types"])
             needed_slots = len(fallbacks_to_add)
-            
-            # 如果添加后会超过 10 个，需要移除一些现有类型
+
+            # 추가 후 10개를 초과하면 일부 기존 유형 제거 필요
             if current_count + needed_slots > MAX_ENTITY_TYPES:
-                # 计算需要移除多少个
+                # 제거해야 할 개수 계산
                 to_remove = current_count + needed_slots - MAX_ENTITY_TYPES
-                # 从末尾移除（保留前面更重要的具体类型）
+                # 뒤에서부터 제거 (앞의 더 중요한 구체적 유형 유지)
                 result["entity_types"] = result["entity_types"][:-to_remove]
-            
-            # 添加兜底类型
+
+            # 폴백 유형 추가
             result["entity_types"].extend(fallbacks_to_add)
-        
-        # 最终确保不超过限制（防御性编程）
+
+        # 최종적으로 제한 초과하지 않도록 보장 (방어적 프로그래밍)
         if len(result["entity_types"]) > MAX_ENTITY_TYPES:
             result["entity_types"] = result["entity_types"][:MAX_ENTITY_TYPES]
         
@@ -399,29 +399,29 @@ class OntologyGenerator:
     
     def generate_python_code(self, ontology: Dict[str, Any]) -> str:
         """
-        将本体定义转换为Python代码（类似ontology.py）
-        
+        온톨로지 정의를 Python 코드로 변환 (ontology.py와 유사)
+
         Args:
-            ontology: 本体定义
-            
+            ontology: 온톨로지 정의
+
         Returns:
-            Python代码字符串
+            Python 코드 문자열
         """
         code_lines = [
             '"""',
-            '自定义实体类型定义',
-            '由MiroFish自动生成，用于金融市场预测模拟',
+            '사용자 정의 엔티티 유형 정의',
+            'MiroFish에서 자동 생성, 금융시장 예측 시뮬레이션용',
             '"""',
             '',
             'from pydantic import Field',
             'from zep_cloud.external_clients.ontology import EntityModel, EntityText, EdgeModel',
             '',
             '',
-            '# ============== 实体类型定义 ==============',
+            '# ============== 엔티티 유형 정의 ==============',
             '',
         ]
-        
-        # 生成实体类型
+
+        # 엔티티 유형 생성
         for entity in ontology.get("entity_types", []):
             name = entity["name"]
             desc = entity.get("description", f"A {name} entity.")
@@ -443,14 +443,14 @@ class OntologyGenerator:
             
             code_lines.append('')
             code_lines.append('')
-        
-        code_lines.append('# ============== 关系类型定义 ==============')
+
+        code_lines.append('# ============== 관계 유형 정의 ==============')
         code_lines.append('')
-        
-        # 生成关系类型
+
+        # 관계 유형 생성
         for edge in ontology.get("edge_types", []):
             name = edge["name"]
-            # 转换为PascalCase类名
+            # PascalCase 클래스명으로 변환
             class_name = ''.join(word.capitalize() for word in name.split('_'))
             desc = edge.get("description", f"A {name} relationship.")
             
@@ -471,9 +471,9 @@ class OntologyGenerator:
             
             code_lines.append('')
             code_lines.append('')
-        
-        # 生成类型字典
-        code_lines.append('# ============== 类型配置 ==============')
+
+        # 유형 딕셔너리 생성
+        code_lines.append('# ============== 유형 설정 ==============')
         code_lines.append('')
         code_lines.append('ENTITY_TYPES = {')
         for entity in ontology.get("entity_types", []):
@@ -488,8 +488,8 @@ class OntologyGenerator:
             code_lines.append(f'    "{name}": {class_name},')
         code_lines.append('}')
         code_lines.append('')
-        
-        # 生成边的source_targets映射
+
+        # 엣지의 source_targets 매핑 생성
         code_lines.append('EDGE_SOURCE_TARGETS = {')
         for edge in ontology.get("edge_types", []):
             name = edge["name"]
