@@ -12,3 +12,6 @@ from . import graph  # noqa: E402, F401
 from . import simulation  # noqa: E402, F401
 from . import report  # noqa: E402, F401
 
+# 시장 시뮬레이션 블루프린트 (별도 prefix 사용)
+from .market_simulation import market_bp  # noqa: E402, F401
+
