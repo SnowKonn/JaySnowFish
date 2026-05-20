@@ -1,6 +1,6 @@
 """
-本体生成服务
-接口1：分析文本内容，生成适合社会模拟的实体和关系类型定义
+온톨로지 생성 서비스
+인터페이스1: 텍스트 내용을 분석하여 사회 시뮬레이션에 적합한 엔티티 및 관계 유형 정의 생성
 """
 
 import json
@@ -14,19 +14,19 @@ logger = logging.getLogger(__name__)
 
 
 def _to_pascal_case(name: str) -> str:
-    """将任意格式的名称转换为 PascalCase（如 'works_for' -> 'WorksFor', 'person' -> 'Person'）"""
-    # 按非字母数字字符分割
+    """임의 형식의 이름을 PascalCase로 변환 (예: 'works_for' -> 'WorksFor', 'person' -> 'Person')"""
+    # 비알파벳/숫자 문자로 분할
     parts = re.split(r'[^a-zA-Z0-9]+', name)
-    # 再按 camelCase 边界分割（如 'camelCase' -> ['camel', 'Case']）
+    # camelCase 경계로 추가 분할 (예: 'camelCase' -> ['camel', 'Case'])
     words = []
     for part in parts:
         words.extend(re.sub(r'([a-z])([A-Z])', r'\1_\2', part).split('_'))
-    # 每个词首字母大写，过滤空串
+    # 각 단어 첫 글자 대문자화, 빈 문자열 필터링
     result = ''.join(word.capitalize() for word in words if word)
     return result if result else 'Unknown'
 
 
-# 本体生成的系统提示词
+# 온톨로지 생성 시스템 프롬프트
 ONTOLOGY_SYSTEM_PROMPT = """你是一个专业的知识图谱本体设计专家。你的任务是分析给定的文本内容和模拟需求，设计适合**社交媒体舆论模拟**的实体类型和关系类型。
 
 **重要：你必须输出有效的JSON格式数据，不要输出任何其他内容。**
@@ -175,8 +175,8 @@ B. **具体类型（8个，根据文本内容设计）**：
 
 class OntologyGenerator:
     """
-    本体生成器
-    分析文本内容，生成实体和关系类型定义
+    온톨로지 생성기
+    텍스트 내용을 분석하여 엔티티 및 관계 유형 정의 생성
     """
     
     def __init__(self, llm_client: Optional[LLMClient] = None):
@@ -189,17 +189,17 @@ class OntologyGenerator:
         additional_context: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        生成本体定义
-        
+        온톨로지 정의 생성
+
         Args:
-            document_texts: 文档文本列表
-            simulation_requirement: 模拟需求描述
-            additional_context: 额外上下文
-            
+            document_texts: 문서 텍스트 목록
+            simulation_requirement: 시뮬레이션 요구사항 설명
+            additional_context: 추가 컨텍스트
+
         Returns:
-            本体定义（entity_types, edge_types等）
+            온톨로지 정의 (entity_types, edge_types 등)
         """
-        # 构建用户消息
+        # 사용자 메시지 구성
         user_message = self._build_user_message(
             document_texts, 
             simulation_requirement,
@@ -213,19 +213,19 @@ class OntologyGenerator:
             {"role": "user", "content": user_message}
         ]
         
-        # 调用LLM
+        # LLM 호출
         result = self.llm_client.chat_json(
             messages=messages,
             temperature=0.3,
             max_tokens=4096
         )
         
-        # 验证和后处理
+        # 검증 및 후처리
         result = self._validate_and_process(result)
         
         return result
     
-    # 传给 LLM 的文本最大长度（5万字）
+    # LLM에 전달할 텍스트 최대 길이 (5만자)
     MAX_TEXT_LENGTH_FOR_LLM = 50000
     
     def _build_user_message(
@@ -234,16 +234,16 @@ class OntologyGenerator:
         simulation_requirement: str,
         additional_context: Optional[str]
     ) -> str:
-        """构建用户消息"""
-        
-        # 合并文本
+        """사용자 메시지 구성"""
+
+        # 텍스트 병합
         combined_text = "\n\n---\n\n".join(document_texts)
         original_length = len(combined_text)
-        
-        # 如果文本超过5万字，截断（仅影响传给LLM的内容，不影响图谱构建）
+
+        # 텍스트가 5만자를 초과하면 절단 (LLM에 전달되는 내용에만 영향, 그래프 구축에는 영향 없음)
         if len(combined_text) > self.MAX_TEXT_LENGTH_FOR_LLM:
             combined_text = combined_text[:self.MAX_TEXT_LENGTH_FOR_LLM]
-            combined_text += f"\n\n...(原文共{original_length}字，已截取前{self.MAX_TEXT_LENGTH_FOR_LLM}字用于本体分析)..."
+            combined_text += f"\n\n...(원문 총 {original_length}자, 온톨로지 분석을 위해 앞 {self.MAX_TEXT_LENGTH_FOR_LLM}자 추출)..."
         
         message = f"""## 模拟需求
 
@@ -275,21 +275,21 @@ class OntologyGenerator:
         return message
     
     def _validate_and_process(self, result: Dict[str, Any]) -> Dict[str, Any]:
-        """验证和后处理结果"""
-        
-        # 确保必要字段存在
+        """검증 및 후처리 결과"""
+
+        # 필수 필드 존재 확인
         if "entity_types" not in result:
             result["entity_types"] = []
         if "edge_types" not in result:
             result["edge_types"] = []
         if "analysis_summary" not in result:
             result["analysis_summary"] = ""
-        
-        # 验证实体类型
-        # 记录原始名称到 PascalCase 的映射，用于后续修正 edge 的 source_targets 引用
+
+        # 엔티티 유형 검증
+        # 원본 이름에서 PascalCase로의 매핑 기록, 추후 edge의 source_targets 참조 수정에 사용
         entity_name_map = {}
         for entity in result["entity_types"]:
-            # 强制将 entity name 转为 PascalCase（Zep API 要求）
+            # 엔티티 이름을 PascalCase로 강제 변환 (Zep API 요구사항)
             if "name" in entity:
                 original_name = entity["name"]
                 entity["name"] = _to_pascal_case(original_name)
@@ -300,19 +300,19 @@ class OntologyGenerator:
                 entity["attributes"] = []
             if "examples" not in entity:
                 entity["examples"] = []
-            # 确保description不超过100字符
+            # description이 100자를 초과하지 않도록 보장
             if len(entity.get("description", "")) > 100:
                 entity["description"] = entity["description"][:97] + "..."
         
-        # 验证关系类型
+        # 관계 유형 검증
         for edge in result["edge_types"]:
-            # 强制将 edge name 转为 SCREAMING_SNAKE_CASE（Zep API 要求）
+            # 엣지 이름을 SCREAMING_SNAKE_CASE로 강제 변환 (Zep API 요구사항)
             if "name" in edge:
                 original_name = edge["name"]
                 edge["name"] = original_name.upper()
                 if edge["name"] != original_name:
                     logger.warning(f"Edge type name '{original_name}' auto-converted to '{edge['name']}'")
-            # 修正 source_targets 中的实体名称引用，与转换后的 PascalCase 保持一致
+            # source_targets의 엔티티 이름 참조 수정, 변환된 PascalCase와 일치하도록 유지
             for st in edge.get("source_targets", []):
                 if st.get("source") in entity_name_map:
                     st["source"] = entity_name_map[st["source"]]
@@ -325,11 +325,11 @@ class OntologyGenerator:
             if len(edge.get("description", "")) > 100:
                 edge["description"] = edge["description"][:97] + "..."
         
-        # Zep API 限制：最多 10 个自定义实体类型，最多 10 个自定义边类型
+        # Zep API 제한: 최대 10개 사용자 정의 엔티티 유형, 최대 10개 사용자 정의 엣지 유형
         MAX_ENTITY_TYPES = 10
         MAX_EDGE_TYPES = 10
 
-        # 去重：按 name 去重，保留首次出现的
+        # 중복 제거: name 기준으로 중복 제거, 첫 번째 출현 유지
         seen_names = set()
         deduped = []
         for entity in result["entity_types"]:
@@ -341,7 +341,7 @@ class OntologyGenerator:
                 logger.warning(f"Duplicate entity type '{name}' removed during validation")
         result["entity_types"] = deduped
 
-        # 兜底类型定义
+        # 폴백 유형 정의
         person_fallback = {
             "name": "Person",
             "description": "Any individual person not fitting other specific person types.",
@@ -362,12 +362,12 @@ class OntologyGenerator:
             "examples": ["small business", "community group"]
         }
         
-        # 检查是否已有兜底类型
+        # 폴백 유형 존재 여부 확인
         entity_names = {e["name"] for e in result["entity_types"]}
         has_person = "Person" in entity_names
         has_organization = "Organization" in entity_names
-        
-        # 需要添加的兜底类型
+
+        # 추가해야 할 폴백 유형
         fallbacks_to_add = []
         if not has_person:
             fallbacks_to_add.append(person_fallback)
@@ -377,18 +377,18 @@ class OntologyGenerator:
         if fallbacks_to_add:
             current_count = len(result["entity_types"])
             needed_slots = len(fallbacks_to_add)
-            
-            # 如果添加后会超过 10 个，需要移除一些现有类型
+
+            # 추가 후 10개를 초과하면 일부 기존 유형 제거 필요
             if current_count + needed_slots > MAX_ENTITY_TYPES:
-                # 计算需要移除多少个
+                # 제거해야 할 개수 계산
                 to_remove = current_count + needed_slots - MAX_ENTITY_TYPES
-                # 从末尾移除（保留前面更重要的具体类型）
+                # 뒤에서부터 제거 (앞의 더 중요한 구체적 유형 유지)
                 result["entity_types"] = result["entity_types"][:-to_remove]
-            
-            # 添加兜底类型
+
+            # 폴백 유형 추가
             result["entity_types"].extend(fallbacks_to_add)
-        
-        # 最终确保不超过限制（防御性编程）
+
+        # 최종적으로 제한 초과하지 않도록 보장 (방어적 프로그래밍)
         if len(result["entity_types"]) > MAX_ENTITY_TYPES:
             result["entity_types"] = result["entity_types"][:MAX_ENTITY_TYPES]
         
@@ -399,29 +399,29 @@ class OntologyGenerator:
     
     def generate_python_code(self, ontology: Dict[str, Any]) -> str:
         """
-        将本体定义转换为Python代码（类似ontology.py）
-        
+        온톨로지 정의를 Python 코드로 변환 (ontology.py와 유사)
+
         Args:
-            ontology: 本体定义
-            
+            ontology: 온톨로지 정의
+
         Returns:
-            Python代码字符串
+            Python 코드 문자열
         """
         code_lines = [
             '"""',
-            '自定义实体类型定义',
-            '由MiroFish自动生成，用于社会舆论模拟',
+            '사용자 정의 엔티티 유형 정의',
+            'MiroFish에서 자동 생성, 사회 여론 시뮬레이션용',
             '"""',
             '',
             'from pydantic import Field',
             'from zep_cloud.external_clients.ontology import EntityModel, EntityText, EdgeModel',
             '',
             '',
-            '# ============== 实体类型定义 ==============',
+            '# ============== 엔티티 유형 정의 ==============',
             '',
         ]
-        
-        # 生成实体类型
+
+        # 엔티티 유형 생성
         for entity in ontology.get("entity_types", []):
             name = entity["name"]
             desc = entity.get("description", f"A {name} entity.")
@@ -443,14 +443,14 @@ class OntologyGenerator:
             
             code_lines.append('')
             code_lines.append('')
-        
-        code_lines.append('# ============== 关系类型定义 ==============')
+
+        code_lines.append('# ============== 관계 유형 정의 ==============')
         code_lines.append('')
-        
-        # 生成关系类型
+
+        # 관계 유형 생성
         for edge in ontology.get("edge_types", []):
             name = edge["name"]
-            # 转换为PascalCase类名
+            # PascalCase 클래스명으로 변환
             class_name = ''.join(word.capitalize() for word in name.split('_'))
             desc = edge.get("description", f"A {name} relationship.")
             
@@ -471,9 +471,9 @@ class OntologyGenerator:
             
             code_lines.append('')
             code_lines.append('')
-        
-        # 生成类型字典
-        code_lines.append('# ============== 类型配置 ==============')
+
+        # 유형 딕셔너리 생성
+        code_lines.append('# ============== 유형 설정 ==============')
         code_lines.append('')
         code_lines.append('ENTITY_TYPES = {')
         for entity in ontology.get("entity_types", []):
@@ -488,8 +488,8 @@ class OntologyGenerator:
             code_lines.append(f'    "{name}": {class_name},')
         code_lines.append('}')
         code_lines.append('')
-        
-        # 生成边的source_targets映射
+
+        # 엣지의 source_targets 매핑 생성
         code_lines.append('EDGE_SOURCE_TARGETS = {')
         for edge in ontology.get("edge_types", []):
             name = edge["name"]
